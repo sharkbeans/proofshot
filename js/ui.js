@@ -21,6 +21,11 @@ const UIManager = {
      */
     cacheElements() {
         this.elements = {
+            // Toolbar toggle
+            toolbarToggle: document.getElementById('toolbar-toggle'),
+            toolbarToggleIcon: document.getElementById('toolbar-toggle-icon'),
+            toolbar: document.getElementById('toolbar'),
+
             // File inputs
             bgFileInput: document.getElementById('bg-file-input'),
             objektFileInput: document.getElementById('objekt-file-input'),
@@ -239,6 +244,39 @@ const UIManager = {
         document.addEventListener('keydown', (e) => {
             this.handleKeyboardShortcuts(e);
         });
+
+        // Toolbar toggle (mobile)
+        const toolbarToggle = this.elements.toolbarToggle;
+        if (toolbarToggle) {
+            toolbarToggle.addEventListener('click', () => {
+                this.toggleToolbar();
+            });
+            this.initMobileToggle();
+        }
+    },
+
+    /**
+     * Toggle toolbar visibility (mobile)
+     */
+    toggleToolbar() {
+        const toolbar = this.elements.toolbar;
+        const toggle = this.elements.toolbarToggle;
+        
+        toolbar.classList.toggle('collapsed');
+        toggle.classList.toggle('collapsed');
+    },
+
+    /**
+     * Initialize mobile toolbar toggle
+     */
+    initMobileToggle() {
+        if (window.innerWidth <= 767) {
+            const toggle = this.elements.toolbarToggle;
+            if (toggle) {
+                toggle.style.display = 'flex';
+                this.initializeLucideIcons();
+            }
+        }
     },
 
     /**
