@@ -392,35 +392,29 @@ const UIManager = {
 
         try {
             this.showLoading('Exporting...');
-
-            const blob = await this.canvas.exportImage();
             const isMobile = window.innerWidth <= 767;
+            const canvas = this.canvas.canvas;
+            const filename = `proofshot-${Date.now()}.png`;
 
-            // Use Web Share API on mobile if available
-            if (isMobile && navigator.share && navigator.canShare) {
-                const file = new File([blob], `proofshot-${Date.now()}.png`, { type: 'image/png' });
-                
-                if (navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'Proofshot',
-                        text: 'Check out my proofshot!'
-                    });
+            // Use Web Share API on mobile
+            if (isMobile) {
+                const shared = await this.exportImageShare(canvas, filename);
+                if (shared) {
                     this.showNotification('Shared successfully', 'success');
-                    return;
                 }
+                return;
             }
 
-            // Fallback to download
+            // Desktop: standard download
+            const blob = await this.canvas.exportImage();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `proofshot-${Date.now()}.png`;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-
             this.showNotification('Proofshot saved successfully', 'success');
         } catch (error) {
             console.error('Error saving:', error);
@@ -428,6 +422,59 @@ const UIManager = {
         } finally {
             this.hideLoading();
         }
+    },
+
+    /**
+     * Export image using Web Share API
+     */
+    async exportImageShare(canvas, filename) {
+        return new Promise((resolve, reject) => {
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    reject(new Error('Failed to create image blob'));
+                    return;
+                }
+
+                try {
+                    const file = new File([blob], filename, { type: 'image/png' });
+
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Proofshot',
+                            text: 'Check out my proofshot!'
+                        });
+                        resolve(true);
+                    } else {
+                        // Fallback to download
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        resolve(true);
+                    }
+                } catch (shareError) {
+                    if (shareError.name === 'AbortError') {
+                        resolve(false);
+                    } else {
+                        // Fallback to download
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        resolve(true);
+                    }
+                }
+            }, 'image/png', 0.95);
+        });
     },
 
     /**

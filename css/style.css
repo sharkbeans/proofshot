@@ -662,28 +662,6 @@ input[type="range"]::-moz-range-track {
     .btn-success span {
         display: inline;
     }
-
-    .desktop-icon,
-    .desktop-text {
-        display: none;
-    }
-
-    .mobile-icon,
-    .mobile-text {
-        display: inline;
-    }
-}
-
-@media (min-width: 768px) {
-    .mobile-icon,
-    .mobile-text {
-        display: none;
-    }
-
-    .desktop-icon,
-    .desktop-text {
-        display: inline;
-    }
 }
 
 /* ===========================
