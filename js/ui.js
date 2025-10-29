@@ -394,8 +394,24 @@ const UIManager = {
             this.showLoading('Exporting...');
 
             const blob = await this.canvas.exportImage();
+            const isMobile = window.innerWidth <= 767;
 
-            // Create download link
+            // Use Web Share API on mobile if available
+            if (isMobile && navigator.share && navigator.canShare) {
+                const file = new File([blob], `proofshot-${Date.now()}.png`, { type: 'image/png' });
+                
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Proofshot',
+                        text: 'Check out my proofshot!'
+                    });
+                    this.showNotification('Shared successfully', 'success');
+                    return;
+                }
+            }
+
+            // Fallback to download
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
