@@ -184,8 +184,8 @@ window.getAppState = function() {
     return {
         canvas: {
             hasBackground: !!CanvasManager.backgroundImage,
-            hasObjekt: !!CanvasManager.objektImage,
-            objekt: CanvasManager.objekt
+            hasPhotocard: !!CanvasManager.photocardImage,
+            photocard: CanvasManager.photocard
         },
         border: BorderManager.currentBorder?.id || 'none',
         version: '1.0'
@@ -231,7 +231,7 @@ Esc          : Close modal
 
 Touch Gestures:
 --------------
-Single finger : Drag objekt
+Single finger : Drag photocard
 Two fingers   : Pinch to zoom
 Two fingers   : Rotate
     `.trim();

@@ -7,7 +7,7 @@ const CanvasManager = {
     canvas: null,
     ctx: null,
     backgroundImage: null,
-    objektImage: null,
+    photocardImage: null,
 
     // Camera properties
     camera: {
@@ -28,8 +28,8 @@ const CanvasManager = {
         flipV: false
     },
 
-    // Objekt transform properties
-    objekt: {
+    // Photocard transform properties
+    photocard: {
         x: 0,
         y: 0,
         scale: 1,
@@ -72,6 +72,9 @@ const CanvasManager = {
         this.ctx = this.canvas.getContext('2d');
         this.resizeCanvas();
         this.attachEventListeners();
+
+        // Load placeholder photocard
+        this.loadPlaceholderPhotocard();
 
         // Initial render
         this.render();
@@ -124,7 +127,24 @@ const CanvasManager = {
      * Handle pointer down (touch/mouse start)
      */
     handlePointerDown(e) {
-        if (!this.objektImage) return;
+        if (!this.photocardImage) return;
+
+        // If placeholder is clicked, trigger upload dialog
+        if (this.isPlaceholder && this.gesture.pointers.length === 0) {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Check if click is on the photocard
+            if (this.isPointOnPhotocard(x, y)) {
+                // Trigger photocard upload
+                const photocardFileInput = document.getElementById('photocard-file-input');
+                if (photocardFileInput) {
+                    photocardFileInput.click();
+                }
+                return;
+            }
+        }
 
         this.gesture.pointers.push({
             id: e.pointerId,
@@ -143,8 +163,8 @@ const CanvasManager = {
 
             this.gesture.startDistance = this.getDistance(p1, p2);
             this.gesture.startAngle = this.getAngle(p1, p2);
-            this.gesture.startScale = this.objekt.scale;
-            this.gesture.startRotation = this.objekt.rotation;
+            this.gesture.startScale = this.photocard.scale;
+            this.gesture.startRotation = this.photocard.rotation;
         }
 
         this.gesture.active = true;
@@ -155,7 +175,20 @@ const CanvasManager = {
      * Handle pointer move (touch/mouse move)
      */
     handlePointerMove(e) {
-        if (!this.gesture.active || !this.objektImage) return;
+        // Update cursor if hovering over placeholder
+        if (this.isPlaceholder && !this.gesture.active) {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (this.isPointOnPhotocard(x, y)) {
+                this.canvas.style.cursor = 'pointer';
+            } else {
+                this.canvas.style.cursor = 'grab';
+            }
+        }
+
+        if (!this.gesture.active || !this.photocardImage) return;
 
         // Update pointer position
         const pointerIndex = this.gesture.pointers.findIndex(p => p.id === e.pointerId);
@@ -169,8 +202,8 @@ const CanvasManager = {
             const dx = e.clientX - this.gesture.lastX;
             const dy = e.clientY - this.gesture.lastY;
 
-            this.objekt.x += dx;
-            this.objekt.y += dy;
+            this.photocard.x += dx;
+            this.photocard.y += dy;
 
             this.gesture.lastX = e.clientX;
             this.gesture.lastY = e.clientY;
@@ -186,12 +219,12 @@ const CanvasManager = {
             // Pinch to zoom
             const distance = this.getDistance(p1, p2);
             const scaleChange = distance / this.gesture.startDistance;
-            this.objekt.scale = Math.max(0.1, Math.min(5, this.gesture.startScale * scaleChange));
+            this.photocard.scale = Math.max(0.1, Math.min(5, this.gesture.startScale * scaleChange));
 
             // Rotate
             const angle = this.getAngle(p1, p2);
             const angleChange = angle - this.gesture.startAngle;
-            this.objekt.rotation = this.gesture.startRotation + angleChange;
+            this.photocard.rotation = this.gesture.startRotation + angleChange;
         }
 
         this.render();
@@ -223,12 +256,12 @@ const CanvasManager = {
      * Handle mouse wheel for zoom (desktop)
      */
     handleWheel(e) {
-        if (!this.objektImage) return;
+        if (!this.photocardImage) return;
 
         e.preventDefault();
 
         const delta = e.deltaY > 0 ? 0.95 : 1.05;
-        this.objekt.scale = Math.max(0.1, Math.min(5, this.objekt.scale * delta));
+        this.photocard.scale = Math.max(0.1, Math.min(5, this.photocard.scale * delta));
 
         this.render();
     },
@@ -243,8 +276,8 @@ const CanvasManager = {
             if (!this.animation.active) return;
 
             // Apply velocity
-            this.objekt.x += this.animation.velocityX;
-            this.objekt.y += this.animation.velocityY;
+            this.photocard.x += this.animation.velocityX;
+            this.photocard.y += this.animation.velocityY;
 
             // Friction
             this.animation.velocityX *= 0.9;
@@ -277,6 +310,33 @@ const CanvasManager = {
      */
     getAngle(p1, p2) {
         return Math.atan2(p2.y - p1.y, p2.x - p1.x);
+    },
+
+    /**
+     * Check if a point is on the photocard (for hit detection)
+     */
+    isPointOnPhotocard(x, y) {
+        if (!this.photocardImage) return false;
+
+        // Transform point to photocard's local coordinates
+        const dx = x - this.photocard.x;
+        const dy = y - this.photocard.y;
+
+        // Rotate point by inverse rotation
+        const cos = Math.cos(-this.photocard.rotation);
+        const sin = Math.sin(-this.photocard.rotation);
+        const localX = dx * cos - dy * sin;
+        const localY = dx * sin + dy * cos;
+
+        // Scale point
+        const scaledX = localX / this.photocard.scale;
+        const scaledY = localY / this.photocard.scale;
+
+        // Check if within image bounds
+        const halfWidth = this.photocardImage.width / 2;
+        const halfHeight = this.photocardImage.height / 2;
+
+        return Math.abs(scaledX) <= halfWidth && Math.abs(scaledY) <= halfHeight;
     },
 
     /**
@@ -383,6 +443,11 @@ const CanvasManager = {
         img.onload = () => {
             this.backgroundImage = img;
             this.stopCamera();
+
+            // If no real photocard has been uploaded, ensure placeholder is visible
+            if (!this.photocardImage || this.isPlaceholder) {
+                this.loadPlaceholderPhotocard();
+            }
         };
         img.src = captureCanvas.toDataURL('image/png');
     },
@@ -411,22 +476,63 @@ const CanvasManager = {
     },
 
     /**
-     * Load objekt image
+     * Load placeholder photocard image
      */
-    loadObjekt(file) {
+    loadPlaceholderPhotocard() {
+        // Create a placeholder SVG for the photocard
+        const placeholderSvg = `
+            <svg width="600" height="900" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#c7b6f9;stop-opacity:0.2" />
+                        <stop offset="100%" style="stop-color:#6dd5a0;stop-opacity:0.15" />
+                    </linearGradient>
+                </defs>
+                <rect width="600" height="900" rx="30" fill="url(#cardGrad)" stroke="#c7b6f9" stroke-width="3" opacity="0.6"/>
+                <circle cx="300" cy="380" r="50" fill="#c7b6f9" opacity="0.3"/>
+                <path d="M 280 380 L 300 360 L 320 380 L 300 400 Z" fill="#c7b6f9" opacity="0.6"/>
+                <text x="300" y="470" font-family="Arial, sans-serif" font-size="32" fill="#c7b6f9" text-anchor="middle" opacity="0.7">Photocard</text>
+                <text x="300" y="510" font-family="Arial, sans-serif" font-size="20" fill="#a0aec0" text-anchor="middle" opacity="0.6">Click to upload photocard</text>
+            </svg>
+        `;
+
+        const img = new Image();
+        img.onload = () => {
+            this.photocardImage = img;
+            this.isPlaceholder = true;
+
+            // Center photocard on canvas
+            const rect = this.canvas.getBoundingClientRect();
+            this.photocard.x = rect.width / 2;
+            this.photocard.y = rect.height / 2;
+            this.photocard.scale = Math.min(rect.width, rect.height) / (img.width * 1.5);
+
+            this.render();
+        };
+        img.src = 'data:image/svg+xml;base64,' + btoa(placeholderSvg);
+    },
+
+    /**
+     * Load photocard image
+     */
+    loadPhotocard(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
 
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    this.objektImage = img;
+                    this.photocardImage = img;
+                    this.isPlaceholder = false;
 
-                    // Center objekt on canvas
+                    // Reset cursor to grab
+                    this.canvas.style.cursor = 'grab';
+
+                    // Center photocard on canvas
                     const rect = this.canvas.getBoundingClientRect();
-                    this.objekt.x = rect.width / 2;
-                    this.objekt.y = rect.height / 2;
-                    this.objekt.scale = Math.min(rect.width, rect.height) / (img.width * 1.5);
+                    this.photocard.x = rect.width / 2;
+                    this.photocard.y = rect.height / 2;
+                    this.photocard.scale = Math.min(rect.width, rect.height) / (img.width * 1.5);
 
                     this.render();
                     resolve();
@@ -460,10 +566,10 @@ const CanvasManager = {
             this.drawBackground();
         }
 
-        // Draw objekt (layer order)
-        if (this.objektImage) {
-            if (this.objekt.layer === 'back') {
-                this.drawObjekt();
+        // Draw photocard (layer order)
+        if (this.photocardImage) {
+            if (this.photocard.layer === 'back') {
+                this.drawPhotocard();
             }
         }
 
@@ -472,9 +578,9 @@ const CanvasManager = {
             window.BorderManager.drawBorder(this.ctx, width, height);
         }
 
-        // Draw objekt on top if layer is front
-        if (this.objektImage && this.objekt.layer === 'front') {
-            this.drawObjekt();
+        // Draw photocard on top if layer is front
+        if (this.photocardImage && this.photocard.layer === 'front') {
+            this.drawPhotocard();
         }
     },
 
@@ -580,29 +686,29 @@ const CanvasManager = {
     },
 
     /**
-     * Draw objekt image with transformations
+     * Draw photocard image with transformations
      */
-    drawObjekt() {
+    drawPhotocard() {
         this.ctx.save();
 
-        // Translate to objekt position
-        this.ctx.translate(this.objekt.x, this.objekt.y);
+        // Translate to photocard position
+        this.ctx.translate(this.photocard.x, this.photocard.y);
 
         // Rotate
-        this.ctx.rotate(this.objekt.rotation);
+        this.ctx.rotate(this.photocard.rotation);
 
         // Scale
-        const scaleX = this.objekt.scale * (this.objekt.flipH ? -1 : 1);
-        const scaleY = this.objekt.scale * (this.objekt.flipV ? -1 : 1);
+        const scaleX = this.photocard.scale * (this.photocard.flipH ? -1 : 1);
+        const scaleY = this.photocard.scale * (this.photocard.flipV ? -1 : 1);
         this.ctx.scale(scaleX, scaleY);
 
         // Draw image centered
-        const width = this.objektImage.width;
-        const height = this.objektImage.height;
-        this.ctx.drawImage(this.objektImage, -width / 2, -height / 2, width, height);
+        const width = this.photocardImage.width;
+        const height = this.photocardImage.height;
+        this.ctx.drawImage(this.photocardImage, -width / 2, -height / 2, width, height);
 
         // Draw toploader overlay if enabled
-        if (this.objekt.showToploader) {
+        if (this.photocard.showToploader) {
             this.drawToploader(width, height);
         }
 
@@ -610,11 +716,11 @@ const CanvasManager = {
     },
 
     /**
-     * Draw toploader overlay on the objekt
+     * Draw toploader overlay on the photocard
      * Creates a realistic thick plastic sleeve with frame effect
      */
     drawToploader(width, height) {
-        // Increase toploader size to overlap the objekt more
+        // Increase toploader size to overlap the photocard more
         const overlap = 41.2; // pixels of overlap on each side (increased by 3%)
         const bottomOverlap = 85; // extra overlap at bottom
         const toploaderWidth = width + (overlap * 2);
@@ -781,50 +887,51 @@ const CanvasManager = {
     },
 
     /**
-     * Objekt transform operations
+     * Photocard transform operations
      */
-    updateObjekt(property, value) {
-        if (!this.objektImage) return;
-        this.objekt[property] = value;
+    updatePhotocard(property, value) {
+        if (!this.photocardImage) return;
+        this.photocard[property] = value;
         this.render();
     },
 
-    flipObjektHorizontal() {
-        if (!this.objektImage) return;
-        this.objekt.flipH = !this.objekt.flipH;
+    flipPhotocardHorizontal() {
+        if (!this.photocardImage) return;
+        this.photocard.flipH = !this.photocard.flipH;
         this.render();
     },
 
-    flipObjektVertical() {
-        if (!this.objektImage) return;
-        this.objekt.flipV = !this.objekt.flipV;
+    flipPhotocardVertical() {
+        if (!this.photocardImage) return;
+        this.photocard.flipV = !this.photocard.flipV;
         this.render();
     },
 
-    resetObjekt() {
-        if (!this.objektImage) return;
+    resetPhotocard() {
+        if (!this.photocardImage) return;
         const rect = this.canvas.getBoundingClientRect();
-        this.objekt = {
+        this.photocard = {
             x: rect.width / 2,
             y: rect.height / 2,
-            scale: Math.min(rect.width, rect.height) / (this.objektImage.width * 1.5),
+            scale: Math.min(rect.width, rect.height) / (this.photocardImage.width * 1.5),
             rotation: 0,
             flipH: false,
             flipV: false,
-            layer: this.objekt.layer
+            layer: this.photocard.layer,
+            showToploader: this.photocard.showToploader
         };
         this.render();
     },
 
     bringToFront() {
-        if (!this.objektImage) return;
-        this.objekt.layer = 'front';
+        if (!this.photocardImage) return;
+        this.photocard.layer = 'front';
         this.render();
     },
 
     sendToBack() {
-        if (!this.objektImage) return;
-        this.objekt.layer = 'back';
+        if (!this.photocardImage) return;
+        this.photocard.layer = 'back';
         this.render();
     },
 
@@ -832,28 +939,28 @@ const CanvasManager = {
      * Toggle toploader visibility
      */
     toggleToploader(show) {
-        this.objekt.showToploader = show;
+        this.photocard.showToploader = show;
         this.render();
     },
 
     // Legacy methods for backward compatibility
     flipHorizontal() {
-        this.flipObjektHorizontal();
+        this.flipPhotocardHorizontal();
     },
 
     flipVertical() {
-        this.flipObjektVertical();
+        this.flipPhotocardVertical();
     },
 
     rotateLeft() {
-        if (!this.objektImage) return;
-        this.objekt.rotation -= Math.PI / 2;
+        if (!this.photocardImage) return;
+        this.photocard.rotation -= Math.PI / 2;
         this.render();
     },
 
     rotateRight() {
-        if (!this.objektImage) return;
-        this.objekt.rotation += Math.PI / 2;
+        if (!this.photocardImage) return;
+        this.photocard.rotation += Math.PI / 2;
         this.render();
     },
 
@@ -862,7 +969,8 @@ const CanvasManager = {
      */
     reset() {
         this.backgroundImage = null;
-        this.objektImage = null;
+        this.photocardImage = null;
+        this.isPlaceholder = false;
         this.background = {
             x: 0,
             y: 0,
@@ -871,16 +979,19 @@ const CanvasManager = {
             flipH: false,
             flipV: false
         };
-        this.objekt = {
+        this.photocard = {
             x: 0,
             y: 0,
             scale: 1,
             rotation: 0,
             flipH: false,
             flipV: false,
-            layer: 'front'
+            layer: 'front',
+            showToploader: true
         };
-        this.render();
+
+        // Reload placeholder photocard
+        this.loadPlaceholderPhotocard();
     },
 
     /**

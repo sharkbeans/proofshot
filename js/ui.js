@@ -14,6 +14,11 @@ const UIManager = {
         this.cacheElements();
         this.attachEventListeners();
         this.initializeLucideIcons();
+
+        // Sync photocard sliders with the initial placeholder
+        setTimeout(() => {
+            this.syncPhotocardSliders();
+        }, 100);
     },
 
     /**
@@ -28,11 +33,11 @@ const UIManager = {
 
             // File inputs
             bgFileInput: document.getElementById('bg-file-input'),
-            objektFileInput: document.getElementById('objekt-file-input'),
+            photocardFileInput: document.getElementById('photocard-file-input'),
 
             // Upload buttons
             uploadBgBtn: document.getElementById('upload-bg-btn'),
-            uploadObjektBtn: document.getElementById('upload-objekt-btn'),
+            uploadPhotocardBtn: document.getElementById('upload-photocard-btn'),
 
             // Camera elements
             cameraBtn: document.getElementById('camera-btn'),
@@ -54,18 +59,18 @@ const UIManager = {
             bgFlipVBtn: document.getElementById('bg-flip-v-btn'),
             bgResetBtn: document.getElementById('bg-reset-btn'),
 
-            // Objekt controls
-            objektXSlider: document.getElementById('objekt-x-slider'),
-            objektYSlider: document.getElementById('objekt-y-slider'),
-            objektScaleSlider: document.getElementById('objekt-scale-slider'),
-            objektRotationSlider: document.getElementById('objekt-rotation-slider'),
-            objektXValue: document.getElementById('objekt-x-value'),
-            objektYValue: document.getElementById('objekt-y-value'),
-            objektScaleValue: document.getElementById('objekt-scale-value'),
-            objektRotationValue: document.getElementById('objekt-rotation-value'),
-            objektFlipHBtn: document.getElementById('objekt-flip-h-btn'),
-            objektFlipVBtn: document.getElementById('objekt-flip-v-btn'),
-            objektResetBtn: document.getElementById('objekt-reset-btn'),
+            // Photocard controls
+            photocardXSlider: document.getElementById('photocard-x-slider'),
+            photocardYSlider: document.getElementById('photocard-y-slider'),
+            photocardScaleSlider: document.getElementById('photocard-scale-slider'),
+            photocardRotationSlider: document.getElementById('photocard-rotation-slider'),
+            photocardXValue: document.getElementById('photocard-x-value'),
+            photocardYValue: document.getElementById('photocard-y-value'),
+            photocardScaleValue: document.getElementById('photocard-scale-value'),
+            photocardRotationValue: document.getElementById('photocard-rotation-value'),
+            photocardFlipHBtn: document.getElementById('photocard-flip-h-btn'),
+            photocardFlipVBtn: document.getElementById('photocard-flip-v-btn'),
+            photocardResetBtn: document.getElementById('photocard-reset-btn'),
 
             // Toploader toggle
             toploaderToggle: document.getElementById('toploader-toggle'),
@@ -100,8 +105,8 @@ const UIManager = {
             this.elements.bgFileInput.click();
         });
 
-        this.elements.uploadObjektBtn.addEventListener('click', () => {
-            this.elements.objektFileInput.click();
+        this.elements.uploadPhotocardBtn.addEventListener('click', () => {
+            this.elements.photocardFileInput.click();
         });
 
         // Camera button
@@ -135,8 +140,8 @@ const UIManager = {
             this.handleBackgroundUpload(e);
         });
 
-        this.elements.objektFileInput.addEventListener('change', (e) => {
-            this.handleObjektUpload(e);
+        this.elements.photocardFileInput.addEventListener('change', (e) => {
+            this.handlePhotocardUpload(e);
         });
 
         // Background sliders
@@ -178,44 +183,44 @@ const UIManager = {
             this.syncBackgroundSliders();
         });
 
-        // Objekt sliders
-        this.elements.objektXSlider.addEventListener('input', (e) => {
+        // Photocard sliders
+        this.elements.photocardXSlider.addEventListener('input', (e) => {
             const value = parseFloat(e.target.value);
-            this.canvas.updateObjekt('x', value);
-            this.elements.objektXValue.textContent = Math.round(value);
+            this.canvas.updatePhotocard('x', value);
+            this.elements.photocardXValue.textContent = Math.round(value);
         });
 
-        this.elements.objektYSlider.addEventListener('input', (e) => {
+        this.elements.photocardYSlider.addEventListener('input', (e) => {
             const value = parseFloat(e.target.value);
-            this.canvas.updateObjekt('y', value);
-            this.elements.objektYValue.textContent = Math.round(value);
+            this.canvas.updatePhotocard('y', value);
+            this.elements.photocardYValue.textContent = Math.round(value);
         });
 
-        this.elements.objektScaleSlider.addEventListener('input', (e) => {
+        this.elements.photocardScaleSlider.addEventListener('input', (e) => {
             const value = parseFloat(e.target.value);
-            this.canvas.updateObjekt('scale', value);
-            this.elements.objektScaleValue.textContent = value.toFixed(2);
+            this.canvas.updatePhotocard('scale', value);
+            this.elements.photocardScaleValue.textContent = value.toFixed(2);
         });
 
-        this.elements.objektRotationSlider.addEventListener('input', (e) => {
+        this.elements.photocardRotationSlider.addEventListener('input', (e) => {
             const value = parseFloat(e.target.value);
             const radians = (value * Math.PI) / 180;
-            this.canvas.updateObjekt('rotation', radians);
-            this.elements.objektRotationValue.textContent = Math.round(value) + '°';
+            this.canvas.updatePhotocard('rotation', radians);
+            this.elements.photocardRotationValue.textContent = Math.round(value) + '°';
         });
 
-        // Objekt buttons
-        this.elements.objektFlipHBtn.addEventListener('click', () => {
-            this.canvas.flipObjektHorizontal();
+        // Photocard buttons
+        this.elements.photocardFlipHBtn.addEventListener('click', () => {
+            this.canvas.flipPhotocardHorizontal();
         });
 
-        this.elements.objektFlipVBtn.addEventListener('click', () => {
-            this.canvas.flipObjektVertical();
+        this.elements.photocardFlipVBtn.addEventListener('click', () => {
+            this.canvas.flipPhotocardVertical();
         });
 
-        this.elements.objektResetBtn.addEventListener('click', () => {
-            this.canvas.resetObjekt();
-            this.syncObjektSliders();
+        this.elements.photocardResetBtn.addEventListener('click', () => {
+            this.canvas.resetPhotocard();
+            this.syncPhotocardSliders();
         });
 
         // Toploader toggle
@@ -349,9 +354,9 @@ const UIManager = {
     },
 
     /**
-     * Handle objekt image upload
+     * Handle photocard image upload
      */
-    async handleObjektUpload(e) {
+    async handlePhotocardUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -361,13 +366,13 @@ const UIManager = {
         }
 
         try {
-            this.showLoading('Loading objekt...');
-            await this.canvas.loadObjekt(file);
-            this.syncObjektSliders();
-            this.showNotification('Objekt loaded successfully', 'success');
+            this.showLoading('Loading photocard...');
+            await this.canvas.loadPhotocard(file);
+            this.syncPhotocardSliders();
+            this.showNotification('Photocard loaded successfully', 'success');
         } catch (error) {
-            console.error('Error loading objekt:', error);
-            this.showNotification('Failed to load objekt', 'error');
+            console.error('Error loading photocard:', error);
+            this.showNotification('Failed to load photocard', 'error');
         } finally {
             this.hideLoading();
             e.target.value = ''; // Reset file input
@@ -386,7 +391,7 @@ const UIManager = {
             return;
         }
 
-        // First image as background, second as objekt
+        // First image as background, second as photocard
         if (imageFiles.length >= 1) {
             await this.canvas.loadBackground(imageFiles[0]);
             this.syncBackgroundSliders();
@@ -394,8 +399,8 @@ const UIManager = {
         }
 
         if (imageFiles.length >= 2) {
-            await this.canvas.loadObjekt(imageFiles[1]);
-            this.syncObjektSliders();
+            await this.canvas.loadPhotocard(imageFiles[1]);
+            this.syncPhotocardSliders();
         }
     },
 
@@ -409,7 +414,7 @@ const UIManager = {
 
         this.canvas.reset();
         this.syncBackgroundSliders();
-        this.syncObjektSliders();
+        this.syncPhotocardSliders();
         this.showCanvasOverlay();
         this.showNotification('Canvas reset', 'success');
     },
@@ -418,8 +423,8 @@ const UIManager = {
      * Handle save/export
      */
     async handleSave() {
-        if (!this.canvas.backgroundImage && !this.canvas.objektImage) {
-            this.showNotification('Please add images before saving', 'error');
+        if (!this.canvas.backgroundImage) {
+            this.showNotification('Please add a background image before saving', 'error');
             return;
         }
 
@@ -729,6 +734,16 @@ const UIManager = {
                 this.elements.cameraControls.classList.add('active');
             }
 
+            // Make canvas container fullscreen
+            const canvasContainer = document.querySelector('.canvas-container');
+            if (canvasContainer) {
+                canvasContainer.classList.add('camera-active');
+                // Resize canvas to fit fullscreen
+                setTimeout(() => {
+                    this.canvas.resizeCanvas();
+                }, 100);
+            }
+
             // Hide canvas overlay
             this.hideCanvasOverlay();
 
@@ -737,7 +752,7 @@ const UIManager = {
                 this.elements.toolbar.classList.add('collapsed');
             }
 
-            this.showNotification('Camera started - position your Objekt and tap the shutter', 'success');
+            this.showNotification('Camera started - position your photocard and tap the shutter', 'success');
         } catch (error) {
             console.error('Error starting camera:', error);
 
@@ -767,6 +782,16 @@ const UIManager = {
                 this.elements.cameraControls.classList.remove('active');
             }
 
+            // Exit fullscreen mode
+            const canvasContainer = document.querySelector('.canvas-container');
+            if (canvasContainer) {
+                canvasContainer.classList.remove('camera-active');
+                // Resize canvas back to normal
+                setTimeout(() => {
+                    this.canvas.resizeCanvas();
+                }, 100);
+            }
+
             // Show success notification with flash effect
             this.showCameraFlash();
             this.showNotification('Photo captured!', 'success');
@@ -785,6 +810,16 @@ const UIManager = {
         // Hide camera controls
         if (this.elements.cameraControls) {
             this.elements.cameraControls.classList.remove('active');
+        }
+
+        // Exit fullscreen mode
+        const canvasContainer = document.querySelector('.canvas-container');
+        if (canvasContainer) {
+            canvasContainer.classList.remove('camera-active');
+            // Resize canvas back to normal
+            setTimeout(() => {
+                this.canvas.resizeCanvas();
+            }, 100);
         }
 
         this.showNotification('Camera closed', 'info');
@@ -850,28 +885,28 @@ const UIManager = {
     },
 
     /**
-     * Sync objekt sliders with canvas state
+     * Sync photocard sliders with canvas state
      */
-    syncObjektSliders() {
-        const obj = this.canvas.objekt;
+    syncPhotocardSliders() {
+        const photocard = this.canvas.photocard;
         const rect = this.canvas.canvas.getBoundingClientRect();
 
         // Update slider max values based on canvas size
-        this.elements.objektXSlider.max = rect.width;
-        this.elements.objektYSlider.max = rect.height;
+        this.elements.photocardXSlider.max = rect.width;
+        this.elements.photocardYSlider.max = rect.height;
 
-        this.elements.objektXSlider.value = obj.x;
-        this.elements.objektXValue.textContent = Math.round(obj.x);
+        this.elements.photocardXSlider.value = photocard.x;
+        this.elements.photocardXValue.textContent = Math.round(photocard.x);
 
-        this.elements.objektYSlider.value = obj.y;
-        this.elements.objektYValue.textContent = Math.round(obj.y);
+        this.elements.photocardYSlider.value = photocard.y;
+        this.elements.photocardYValue.textContent = Math.round(photocard.y);
 
-        this.elements.objektScaleSlider.value = obj.scale;
-        this.elements.objektScaleValue.textContent = obj.scale.toFixed(2);
+        this.elements.photocardScaleSlider.value = photocard.scale;
+        this.elements.photocardScaleValue.textContent = photocard.scale.toFixed(2);
 
-        const degrees = (obj.rotation * 180) / Math.PI;
-        this.elements.objektRotationSlider.value = degrees;
-        this.elements.objektRotationValue.textContent = Math.round(degrees) + '°';
+        const degrees = (photocard.rotation * 180) / Math.PI;
+        this.elements.photocardRotationSlider.value = degrees;
+        this.elements.photocardRotationValue.textContent = Math.round(degrees) + '°';
     }
 };
 

@@ -120,6 +120,22 @@ body {
     width: 100%;
     touch-action: none;
     user-select: none;
+    transition: var(--transition);
+}
+
+.canvas-container.camera-active {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    aspect-ratio: auto;
+    border-radius: 0;
+    z-index: 1000;
+    margin: 0;
 }
 
 #proofshot-canvas {
@@ -694,7 +710,7 @@ input[type="range"]::-moz-range-track {
     padding: var(--spacing-xl) var(--spacing-md);
     background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
     pointer-events: none;
-    z-index: 100;
+    z-index: 1001;
 }
 
 .camera-controls.active {
