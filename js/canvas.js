@@ -9,6 +9,15 @@ const CanvasManager = {
     backgroundImage: null,
     objektImage: null,
 
+    // Camera properties
+    camera: {
+        active: false,
+        stream: null,
+        video: null,
+        facingMode: 'environment', // 'user' for front, 'environment' for back
+        animationFrame: null
+    },
+
     // Background transform properties
     background: {
         x: 0,
@@ -271,6 +280,114 @@ const CanvasManager = {
     },
 
     /**
+     * Start camera with specified facing mode
+     */
+    async startCamera() {
+        try {
+            // Get video element
+            this.camera.video = document.getElementById('camera-video');
+
+            if (!this.camera.video) {
+                throw new Error('Camera video element not found');
+            }
+
+            // Request camera access
+            const constraints = {
+                video: {
+                    facingMode: this.camera.facingMode,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                },
+                audio: false
+            };
+
+            this.camera.stream = await navigator.mediaDevices.getUserMedia(constraints);
+            this.camera.video.srcObject = this.camera.stream;
+            this.camera.active = true;
+
+            // Wait for video to be ready
+            await new Promise((resolve) => {
+                this.camera.video.onloadedmetadata = () => {
+                    resolve();
+                };
+            });
+
+            // Start rendering camera frames
+            this.renderCameraFrame();
+
+            return true;
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Stop camera stream
+     */
+    stopCamera() {
+        if (this.camera.stream) {
+            this.camera.stream.getTracks().forEach(track => track.stop());
+            this.camera.stream = null;
+        }
+
+        if (this.camera.animationFrame) {
+            cancelAnimationFrame(this.camera.animationFrame);
+            this.camera.animationFrame = null;
+        }
+
+        this.camera.active = false;
+        this.camera.video = null;
+        this.render();
+    },
+
+    /**
+     * Flip camera between front and back
+     */
+    async flipCamera() {
+        this.camera.facingMode = this.camera.facingMode === 'user' ? 'environment' : 'user';
+        this.stopCamera();
+        await this.startCamera();
+    },
+
+    /**
+     * Render camera frame to canvas
+     */
+    renderCameraFrame() {
+        if (!this.camera.active || !this.camera.video) return;
+
+        // Render the current frame
+        this.render();
+
+        // Schedule next frame
+        this.camera.animationFrame = requestAnimationFrame(() => this.renderCameraFrame());
+    },
+
+    /**
+     * Capture current camera frame as background
+     */
+    captureFrame() {
+        if (!this.camera.active || !this.camera.video) return;
+
+        // Create a canvas to capture the current frame
+        const captureCanvas = document.createElement('canvas');
+        captureCanvas.width = this.camera.video.videoWidth;
+        captureCanvas.height = this.camera.video.videoHeight;
+        const captureCtx = captureCanvas.getContext('2d');
+
+        // Draw the video frame
+        captureCtx.drawImage(this.camera.video, 0, 0);
+
+        // Convert to image
+        const img = new Image();
+        img.onload = () => {
+            this.backgroundImage = img;
+            this.stopCamera();
+        };
+        img.src = captureCanvas.toDataURL('image/png');
+    },
+
+    /**
      * Load background image
      */
     loadBackground(file) {
@@ -334,8 +451,12 @@ const CanvasManager = {
         // Clear canvas
         this.ctx.clearRect(0, 0, width, height);
 
-        // Draw background
-        if (this.backgroundImage) {
+        // Draw camera feed if active
+        if (this.camera.active && this.camera.video) {
+            this.drawCameraFeed();
+        }
+        // Otherwise draw background image
+        else if (this.backgroundImage) {
             this.drawBackground();
         }
 
@@ -355,6 +476,56 @@ const CanvasManager = {
         if (this.objektImage && this.objekt.layer === 'front') {
             this.drawObjekt();
         }
+    },
+
+    /**
+     * Draw camera feed
+     */
+    drawCameraFeed() {
+        const rect = this.canvas.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+
+        this.ctx.save();
+
+        // Calculate cover sizing for video
+        const videoRatio = this.camera.video.videoWidth / this.camera.video.videoHeight;
+        const canvasRatio = width / height;
+
+        let baseWidth, baseHeight;
+
+        if (videoRatio > canvasRatio) {
+            baseHeight = height;
+            baseWidth = height * videoRatio;
+        } else {
+            baseWidth = width;
+            baseHeight = width / videoRatio;
+        }
+
+        // Apply transformations (same as background)
+        const centerX = width / 2 + this.background.x;
+        const centerY = height / 2 + this.background.y;
+        this.ctx.translate(centerX, centerY);
+
+        // Rotate
+        const rotationRad = (this.background.rotation * Math.PI) / 180;
+        this.ctx.rotate(rotationRad);
+
+        // Scale with flip
+        const scaleX = this.background.scale * (this.background.flipH ? -1 : 1);
+        const scaleY = this.background.scale * (this.background.flipV ? -1 : 1);
+        this.ctx.scale(scaleX, scaleY);
+
+        // Draw video centered
+        this.ctx.drawImage(
+            this.camera.video,
+            -baseWidth / 2,
+            -baseHeight / 2,
+            baseWidth,
+            baseHeight
+        );
+
+        this.ctx.restore();
     },
 
     /**

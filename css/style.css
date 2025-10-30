@@ -680,6 +680,119 @@ input[type="range"]::-moz-range-track {
 }
 
 /* ===========================
+   Camera Controls
+   =========================== */
+
+.camera-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
+    pointer-events: none;
+    z-index: 100;
+}
+
+.camera-controls.active {
+    display: flex;
+    pointer-events: auto;
+}
+
+/* Shutter Button - iOS Camera Style */
+.camera-shutter-btn {
+    width: 80px;
+    height: 80px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: var(--spacing-md);
+    transition: transform 0.1s ease;
+}
+
+.camera-shutter-btn:active {
+    transform: scale(0.9);
+}
+
+.shutter-ring {
+    width: 100%;
+    height: 100%;
+    border: 4px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+.shutter-inner {
+    width: 64px;
+    height: 64px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.1s ease;
+}
+
+.camera-shutter-btn:active .shutter-inner {
+    transform: scale(0.85);
+}
+
+/* Camera Close and Flip Buttons */
+.camera-close-btn,
+.camera-flip-btn {
+    position: absolute;
+    bottom: var(--spacing-xl);
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    backdrop-filter: blur(10px);
+}
+
+.camera-close-btn {
+    left: var(--spacing-xl);
+}
+
+.camera-flip-btn {
+    right: var(--spacing-xl);
+}
+
+.camera-close-btn:active,
+.camera-flip-btn:active {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(0.9);
+}
+
+.camera-close-btn svg,
+.camera-flip-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Mobile Only Utility */
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .mobile-only {
+        display: inline-flex !important;
+    }
+}
+
+/* ===========================
    Utilities
    =========================== */
 
@@ -697,5 +810,17 @@ input[type="range"]::-moz-range-track {
     }
     to {
         opacity: 1;
+    }
+}
+
+@keyframes cameraFlash {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 0;
     }
 }

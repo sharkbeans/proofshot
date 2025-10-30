@@ -31,6 +31,20 @@
                 <div class="canvas-overlay" id="canvas-overlay">
                     <p class="upload-prompt">Upload a background to get started</p>
                 </div>
+                <!-- Camera Controls Overlay -->
+                <div class="camera-controls" id="camera-controls">
+                    <button class="camera-shutter-btn" id="camera-shutter-btn">
+                        <div class="shutter-ring">
+                            <div class="shutter-inner"></div>
+                        </div>
+                    </button>
+                    <button class="camera-close-btn" id="camera-close-btn">
+                        <i data-lucide="x"></i>
+                    </button>
+                    <button class="camera-flip-btn" id="camera-flip-btn">
+                        <i data-lucide="repeat"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Toolbar -->
@@ -45,6 +59,10 @@
                         <button class="btn btn-primary" id="upload-bg-btn">
                             <i data-lucide="image"></i>
                             <span>Background</span>
+                        </button>
+                        <button class="btn btn-primary mobile-only" id="camera-btn">
+                            <i data-lucide="camera"></i>
+                            <span>Camera</span>
                         </button>
                         <button class="btn btn-primary" id="upload-objekt-btn">
                             <i data-lucide="credit-card"></i>
@@ -216,6 +234,9 @@
     <!-- Hidden File Inputs -->
     <input type="file" id="bg-file-input" accept="image/*" style="display: none;">
     <input type="file" id="objekt-file-input" accept="image/*" style="display: none;">
+
+    <!-- Hidden Video Element for Camera -->
+    <video id="camera-video" autoplay playsinline style="display: none;"></video>
 
     <!-- QR Code Modal -->
     <div class="modal" id="qr-modal">

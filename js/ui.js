@@ -34,6 +34,13 @@ const UIManager = {
             uploadBgBtn: document.getElementById('upload-bg-btn'),
             uploadObjektBtn: document.getElementById('upload-objekt-btn'),
 
+            // Camera elements
+            cameraBtn: document.getElementById('camera-btn'),
+            cameraControls: document.getElementById('camera-controls'),
+            cameraShutterBtn: document.getElementById('camera-shutter-btn'),
+            cameraCloseBtn: document.getElementById('camera-close-btn'),
+            cameraFlipBtn: document.getElementById('camera-flip-btn'),
+
             // Background controls
             bgXSlider: document.getElementById('bg-x-slider'),
             bgYSlider: document.getElementById('bg-y-slider'),
@@ -96,6 +103,32 @@ const UIManager = {
         this.elements.uploadObjektBtn.addEventListener('click', () => {
             this.elements.objektFileInput.click();
         });
+
+        // Camera button
+        if (this.elements.cameraBtn) {
+            this.elements.cameraBtn.addEventListener('click', () => {
+                this.handleCameraStart();
+            });
+        }
+
+        // Camera controls
+        if (this.elements.cameraShutterBtn) {
+            this.elements.cameraShutterBtn.addEventListener('click', () => {
+                this.handleCameraCapture();
+            });
+        }
+
+        if (this.elements.cameraCloseBtn) {
+            this.elements.cameraCloseBtn.addEventListener('click', () => {
+                this.handleCameraClose();
+            });
+        }
+
+        if (this.elements.cameraFlipBtn) {
+            this.elements.cameraFlipBtn.addEventListener('click', () => {
+                this.handleCameraFlip();
+            });
+        }
 
         // File inputs
         this.elements.bgFileInput.addEventListener('change', (e) => {
@@ -675,6 +708,126 @@ const UIManager = {
                 document.body.removeChild(toast);
             }, 300);
         }, 3000);
+    },
+
+    /**
+     * Handle camera start
+     */
+    async handleCameraStart() {
+        try {
+            // Check if camera is supported
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                this.showNotification('Camera not supported on this device', 'error');
+                return;
+            }
+
+            this.showLoading('Starting camera...');
+            await this.canvas.startCamera();
+
+            // Show camera controls
+            if (this.elements.cameraControls) {
+                this.elements.cameraControls.classList.add('active');
+            }
+
+            // Hide canvas overlay
+            this.hideCanvasOverlay();
+
+            // Collapse toolbar on mobile
+            if (window.innerWidth <= 767) {
+                this.elements.toolbar.classList.add('collapsed');
+            }
+
+            this.showNotification('Camera started - position your Objekt and tap the shutter', 'success');
+        } catch (error) {
+            console.error('Error starting camera:', error);
+
+            let errorMessage = 'Failed to access camera';
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
+            } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                errorMessage = 'No camera found on this device';
+            }
+
+            this.showNotification(errorMessage, 'error');
+        } finally {
+            this.hideLoading();
+        }
+    },
+
+    /**
+     * Handle camera capture
+     */
+    handleCameraCapture() {
+        try {
+            // Capture the current frame
+            this.canvas.captureFrame();
+
+            // Hide camera controls
+            if (this.elements.cameraControls) {
+                this.elements.cameraControls.classList.remove('active');
+            }
+
+            // Show success notification with flash effect
+            this.showCameraFlash();
+            this.showNotification('Photo captured!', 'success');
+        } catch (error) {
+            console.error('Error capturing photo:', error);
+            this.showNotification('Failed to capture photo', 'error');
+        }
+    },
+
+    /**
+     * Handle camera close
+     */
+    handleCameraClose() {
+        this.canvas.stopCamera();
+
+        // Hide camera controls
+        if (this.elements.cameraControls) {
+            this.elements.cameraControls.classList.remove('active');
+        }
+
+        this.showNotification('Camera closed', 'info');
+    },
+
+    /**
+     * Handle camera flip
+     */
+    async handleCameraFlip() {
+        try {
+            this.showLoading('Flipping camera...');
+            await this.canvas.flipCamera();
+            this.showNotification('Camera flipped', 'success');
+        } catch (error) {
+            console.error('Error flipping camera:', error);
+            this.showNotification('Failed to flip camera', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    },
+
+    /**
+     * Show camera flash effect
+     */
+    showCameraFlash() {
+        const flash = document.createElement('div');
+        flash.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 9999;
+            pointer-events: none;
+            animation: cameraFlash 0.3s ease-out;
+        `;
+
+        document.body.appendChild(flash);
+
+        setTimeout(() => {
+            document.body.removeChild(flash);
+        }, 300);
     },
 
     /**
