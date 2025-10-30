@@ -699,10 +699,10 @@ input[type="range"]::-moz-range-track {
    =========================== */
 
 .camera-controls {
-    position: absolute;
+    position: fixed;
     bottom: 80px;
-    left: 0;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
     display: none;
     flex-direction: column;
     align-items: center;
@@ -710,6 +710,8 @@ input[type="range"]::-moz-range-track {
     background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
     pointer-events: none;
     z-index: 1001;
+    width: 100%;
+    max-width: 75vh;
 }
 
 .camera-controls.active {
@@ -760,7 +762,7 @@ input[type="range"]::-moz-range-track {
 /* Camera Close and Flip Buttons */
 .camera-close-btn,
 .camera-flip-btn {
-    position: absolute;
+    position: fixed;
     bottom: calc(var(--spacing-xl) + 80px);
     width: 50px;
     height: 50px;
@@ -774,14 +776,15 @@ input[type="range"]::-moz-range-track {
     justify-content: center;
     transition: var(--transition);
     backdrop-filter: blur(10px);
+    z-index: 1002;
 }
 
 .camera-close-btn {
-    left: var(--spacing-xl);
+    left: calc(50% - min(37.5vh, 50vw) + var(--spacing-xl));
 }
 
 .camera-flip-btn {
-    right: var(--spacing-xl);
+    right: calc(50% - min(37.5vh, 50vw) + var(--spacing-xl));
 }
 
 .camera-close-btn:active,
