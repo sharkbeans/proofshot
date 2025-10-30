@@ -125,17 +125,16 @@ body {
 
 .canvas-container.camera-active {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 100vw;
-    height: 100vh;
-    max-width: none;
+    height: 133.33vw;
+    max-width: 75vh;
+    max-height: 100vh;
     aspect-ratio: 3/4;
     border-radius: 0;
     z-index: 1000;
-    margin: 0 auto;
 }
 
 #proofshot-canvas {
