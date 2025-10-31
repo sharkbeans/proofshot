@@ -525,7 +525,7 @@ const CanvasManager = {
                 <circle cx="300" cy="380" r="50" fill="#c7b6f9" opacity="0.3"/>
                 <path d="M 280 380 L 300 360 L 320 380 L 300 400 Z" fill="#c7b6f9" opacity="0.6"/>
                 <text x="300" y="470" font-family="Arial, sans-serif" font-size="32" fill="#c7b6f9" text-anchor="middle" opacity="0.7">Photocard</text>
-                <text x="300" y="510" font-family="Arial, sans-serif" font-size="20" fill="#a0aec0" text-anchor="middle" opacity="0.6">Click to upload photocard</text>
+                <text x="300" y="510" font-family="Arial, sans-serif" font-size="25" fill="#a0aec0" text-anchor="middle" opacity="0.7">Click + to upload photocard</text>
             </svg>
         `;
 
