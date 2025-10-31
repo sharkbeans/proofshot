@@ -104,12 +104,18 @@ const UIManager = {
             // Canvas overlay
             canvasOverlay: document.getElementById('canvas-overlay'),
 
-            // Modal
+            // QR Modal
             qrModal: document.getElementById('qr-modal'),
             qrModalClose: document.getElementById('qr-modal-close'),
             qrCodeContainer: document.getElementById('qr-code-container'),
             shareUrlInput: document.getElementById('share-url'),
-            copyUrlBtn: document.getElementById('copy-url-btn')
+            copyUrlBtn: document.getElementById('copy-url-btn'),
+
+            // Save Confirmation Modal
+            saveConfirmationModal: document.getElementById('save-confirmation-modal'),
+            saveConfirmationModalClose: document.getElementById('save-confirmation-modal-close'),
+            confirmSaveBtn: document.getElementById('confirm-save-btn'),
+            createNewBtn: document.getElementById('create-new-btn')
         };
     },
 
@@ -304,19 +310,38 @@ const UIManager = {
             this.handleQRCode();
         });
 
-        // Modal
+        // QR Modal
         this.elements.qrModalClose.addEventListener('click', () => {
-            this.closeModal();
+            this.closeQRModal();
         });
 
         this.elements.qrModal.addEventListener('click', (e) => {
             if (e.target === this.elements.qrModal) {
-                this.closeModal();
+                this.closeQRModal();
             }
         });
 
         this.elements.copyUrlBtn.addEventListener('click', () => {
             this.copyShareUrl();
+        });
+
+        // Save Confirmation Modal
+        this.elements.saveConfirmationModalClose.addEventListener('click', () => {
+            this.closeSaveConfirmationModal();
+        });
+
+        this.elements.saveConfirmationModal.addEventListener('click', (e) => {
+            if (e.target === this.elements.saveConfirmationModal) {
+                this.closeSaveConfirmationModal();
+            }
+        });
+
+        this.elements.confirmSaveBtn.addEventListener('click', () => {
+            this.handleConfirmSave();
+        });
+
+        this.elements.createNewBtn.addEventListener('click', () => {
+            this.handleCreateNew();
         });
 
         // Drag and drop for canvas
@@ -526,7 +551,7 @@ const UIManager = {
     },
 
     /**
-     * Handle save/export
+     * Handle save/export - now shows confirmation modal
      */
     async handleSave() {
         if (!this.canvas.backgroundImage) {
@@ -534,38 +559,8 @@ const UIManager = {
             return;
         }
 
-        try {
-            this.showLoading('Exporting...');
-            const isMobile = window.innerWidth <= 767;
-            const canvas = this.canvas.canvas;
-            const filename = `proofshot-${Date.now()}.png`;
-
-            // Use Web Share API on mobile
-            if (isMobile) {
-                const shared = await this.exportImageShare(canvas, filename);
-                if (shared) {
-                    this.showNotification('Shared successfully', 'success');
-                }
-                return;
-            }
-
-            // Desktop: standard download
-            const blob = await this.canvas.exportImage();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            this.showNotification('Proofshot saved successfully', 'success');
-        } catch (error) {
-            console.error('Error saving:', error);
-            this.showNotification('Failed to save proofshot', 'error');
-        } finally {
-            this.hideLoading();
-        }
+        // Show the save confirmation modal
+        this.openSaveConfirmationModal();
     },
 
     /**
@@ -713,7 +708,8 @@ const UIManager = {
                 this.canvas.rotateRight();
                 break;
             case 'escape':
-                this.closeModal();
+                this.closeQRModal();
+                this.closeSaveConfirmationModal();
                 break;
         }
     },
@@ -740,17 +736,168 @@ const UIManager = {
     },
 
     /**
-     * Open modal
+     * Open QR modal
      */
     openModal() {
         this.elements.qrModal.classList.add('active');
     },
 
     /**
-     * Close modal
+     * Close QR modal
+     */
+    closeQRModal() {
+        this.elements.qrModal.classList.remove('active');
+    },
+
+    /**
+     * Close modal (legacy support)
      */
     closeModal() {
-        this.elements.qrModal.classList.remove('active');
+        this.closeQRModal();
+    },
+
+    /**
+     * Open save confirmation modal
+     */
+    openSaveConfirmationModal() {
+        this.elements.saveConfirmationModal.classList.add('active');
+        // Re-initialize icons for the modal
+        this.initializeLucideIcons();
+    },
+
+    /**
+     * Close save confirmation modal
+     */
+    closeSaveConfirmationModal() {
+        this.elements.saveConfirmationModal.classList.remove('active');
+    },
+
+    /**
+     * Handle confirm save (actual save action)
+     */
+    async handleConfirmSave() {
+        // Close the modal first
+        this.closeSaveConfirmationModal();
+
+        try {
+            this.showLoading('Exporting...');
+            const isMobile = window.innerWidth <= 767;
+            const canvas = this.canvas.canvas;
+            const filename = `proofshot-${Date.now()}.png`;
+
+            // Use Web Share API on mobile
+            if (isMobile) {
+                const shared = await this.exportImageShare(canvas, filename);
+                if (shared) {
+                    this.showNotification('Shared successfully', 'success');
+                } else {
+                    this.showNotification('Photo saved!', 'success');
+                }
+            } else {
+                // Desktop: standard download
+                const blob = await this.canvas.exportImage();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                this.showNotification('Proofshot saved successfully', 'success');
+            }
+        } catch (error) {
+            console.error('Error saving:', error);
+            this.showNotification('Failed to save proofshot', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    },
+
+    /**
+     * Handle create new (reopen camera)
+     */
+    async handleCreateNew() {
+        // Close the modal
+        this.closeSaveConfirmationModal();
+
+        // Hide camera action buttons if visible
+        if (this.elements.cameraActionButtons) {
+            this.elements.cameraActionButtons.classList.remove('active');
+        }
+
+        const isMobile = window.innerWidth <= 767;
+
+        if (isMobile) {
+            // On mobile, show the mobile home screen
+            if (this.elements.mobileHome) {
+                this.elements.mobileHome.classList.add('active');
+            }
+
+            // Clear the background image but keep the photocard
+            this.canvas.backgroundImage = null;
+            this.canvas.render();
+        } else {
+            // On desktop, restart camera or clear and prepare for new image
+            try {
+                // Clear the background image
+                this.canvas.backgroundImage = null;
+
+                // Check if we can start camera
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    // Show upload background and add photocard buttons
+                    if (this.elements.cameraUploadBgBtn) {
+                        this.elements.cameraUploadBgBtn.style.display = '';
+                    }
+                    if (this.elements.cameraAddPhotocardBtn) {
+                        this.elements.cameraAddPhotocardBtn.style.display = '';
+                    }
+
+                    // Start camera
+                    this.showLoading('Starting camera...');
+                    await this.canvas.startCamera();
+
+                    // Show camera controls
+                    if (this.elements.cameraControls) {
+                        this.elements.cameraControls.classList.add('active');
+                    }
+
+                    // Show aspect ratio button
+                    if (this.elements.cameraAspectRatioBtn) {
+                        this.elements.cameraAspectRatioBtn.classList.add('active');
+                    }
+
+                    // Show reset photocard button
+                    if (this.elements.cameraResetPhotocardBtn) {
+                        this.elements.cameraResetPhotocardBtn.classList.add('active');
+                    }
+
+                    // Make canvas container fullscreen with aspect ratio
+                    const canvasContainer = document.querySelector('.canvas-container');
+                    if (canvasContainer) {
+                        canvasContainer.classList.add('camera-active');
+                        this.applyAspectRatio(canvasContainer);
+                        // Resize canvas to fit fullscreen
+                        setTimeout(() => {
+                            this.canvas.resizeCanvas();
+                        }, 100);
+                    }
+
+                    this.hideLoading();
+                } else {
+                    // Camera not available, just show canvas overlay
+                    this.canvas.render();
+                    this.showCanvasOverlay();
+                    this.showNotification('Ready for new proofshot', 'info');
+                }
+            } catch (error) {
+                console.error('Error starting new session:', error);
+                this.canvas.render();
+                this.showCanvasOverlay();
+                this.showNotification('Ready for new proofshot', 'info');
+                this.hideLoading();
+            }
+        }
     },
 
     /**
@@ -1161,33 +1308,11 @@ const UIManager = {
     },
 
     /**
-     * Handle camera save
+     * Handle camera save - now shows confirmation modal
      */
     async handleCameraSave() {
-        try {
-            this.showLoading('Preparing to share...');
-            const canvas = this.canvas.canvas;
-            const filename = `proofshot-${Date.now()}.png`;
-
-            // Use mobile share API
-            const shared = await this.exportImageShare(canvas, filename);
-
-            // Hide action buttons
-            if (this.elements.cameraActionButtons) {
-                this.elements.cameraActionButtons.classList.remove('active');
-            }
-
-            if (shared) {
-                this.showNotification('Photo shared successfully!', 'success');
-            } else {
-                this.showNotification('Photo saved!', 'success');
-            }
-        } catch (error) {
-            console.error('Error saving/sharing photo:', error);
-            this.showNotification('Failed to save photo', 'error');
-        } finally {
-            this.hideLoading();
-        }
+        // Show the save confirmation modal
+        this.openSaveConfirmationModal();
     },
 
     /**

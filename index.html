@@ -295,6 +295,30 @@
         </div>
     </div>
 
+    <!-- Save Confirmation Modal -->
+    <div class="modal" id="save-confirmation-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>What's Next?</h2>
+                <button class="modal-close" id="save-confirmation-modal-close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="button-group" style="flex-direction: column; gap: 12px;">
+                    <button class="btn btn-success" id="confirm-save-btn" style="width: 100%;">
+                        <i data-lucide="download"></i>
+                        <span>Save Image</span>
+                    </button>
+                    <button class="btn btn-primary" id="create-new-btn" style="width: 100%;">
+                        <i data-lucide="camera"></i>
+                        <span>Create New</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/borders.js"></script>
     <script src="js/canvas.js"></script>
