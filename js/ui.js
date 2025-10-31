@@ -1040,6 +1040,8 @@ const UIManager = {
             this.elements.cameraActionButtons.classList.remove('active');
         }
         
+        // Exit camera mode completely
+        this.handleCameraClose();
         this.showNotification('Photo saved!', 'success');
     },
 
