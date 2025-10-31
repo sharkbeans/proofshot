@@ -820,6 +820,14 @@ const UIManager = {
                 this.elements.cameraAspectRatioBtn.classList.remove('active');
             }
 
+            // Hide close and add photocard buttons
+            if (this.elements.cameraCloseBtn) {
+                this.elements.cameraCloseBtn.style.display = 'none';
+            }
+            if (this.elements.cameraAddPhotocardBtn) {
+                this.elements.cameraAddPhotocardBtn.style.display = 'none';
+            }
+
             // Exit fullscreen mode but keep aspect ratio
             const canvasContainer = document.querySelector('.canvas-container');
             if (canvasContainer) {
@@ -869,6 +877,11 @@ const UIManager = {
         // Hide aspect ratio button
         if (this.elements.cameraAspectRatioBtn) {
             this.elements.cameraAspectRatioBtn.classList.remove('active');
+        }
+
+        // Hide action buttons
+        if (this.elements.cameraActionButtons) {
+            this.elements.cameraActionButtons.classList.remove('active');
         }
 
         // Exit fullscreen mode
