@@ -6,6 +6,7 @@
 const UIManager = {
     elements: {},
     cameraAspectRatio: '3:4', // Default aspect ratio
+    canvasAspectRatio: '3:4', // Canvas aspect ratio after capture
 
     /**
      * Initialize UI manager
@@ -788,6 +789,9 @@ const UIManager = {
      */
     handleCameraCapture() {
         try {
+            // Save the current aspect ratio
+            this.canvasAspectRatio = this.cameraAspectRatio;
+
             // Capture the current frame
             this.canvas.captureFrame();
 
@@ -801,12 +805,13 @@ const UIManager = {
                 this.elements.cameraAspectRatioBtn.classList.remove('active');
             }
 
-            // Exit fullscreen mode
+            // Exit fullscreen mode but keep aspect ratio
             const canvasContainer = document.querySelector('.canvas-container');
             if (canvasContainer) {
                 canvasContainer.classList.remove('camera-active');
-                // Remove aspect ratio classes
-                canvasContainer.classList.remove('aspect-3-4', 'aspect-9-16', 'aspect-1-1');
+
+                // Keep the aspect ratio for the canvas
+                this.applyCanvasAspectRatio(canvasContainer);
 
                 // Reset canvas style
                 const canvas = document.getElementById('proofshot-canvas');
@@ -815,7 +820,7 @@ const UIManager = {
                     canvas.style.height = '';
                 }
 
-                // Resize canvas back to normal
+                // Resize canvas to new aspect ratio
                 setTimeout(() => {
                     this.canvas.resizeCanvas();
                 }, 100);
@@ -908,7 +913,7 @@ const UIManager = {
     },
 
     /**
-     * Apply aspect ratio class to container
+     * Apply aspect ratio class to container (for camera mode)
      */
     applyAspectRatio(container) {
         // Remove all aspect ratio classes
@@ -916,6 +921,27 @@ const UIManager = {
 
         // Add the current aspect ratio class
         switch (this.cameraAspectRatio) {
+            case '3:4':
+                container.classList.add('aspect-3-4');
+                break;
+            case '9:16':
+                container.classList.add('aspect-9-16');
+                break;
+            case '1:1':
+                container.classList.add('aspect-1-1');
+                break;
+        }
+    },
+
+    /**
+     * Apply aspect ratio class to container (for normal canvas mode)
+     */
+    applyCanvasAspectRatio(container) {
+        // Remove all aspect ratio classes
+        container.classList.remove('aspect-3-4', 'aspect-9-16', 'aspect-1-1');
+
+        // Add the canvas aspect ratio class
+        switch (this.canvasAspectRatio) {
             case '3:4':
                 container.classList.add('aspect-3-4');
                 break;

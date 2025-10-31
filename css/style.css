@@ -123,6 +123,19 @@ body {
     transition: var(--transition);
 }
 
+/* Aspect ratio classes for normal mode */
+.canvas-container.aspect-9-16:not(.camera-active) {
+    aspect-ratio: 9/16;
+}
+
+.canvas-container.aspect-1-1:not(.camera-active) {
+    aspect-ratio: 1/1;
+}
+
+.canvas-container.aspect-3-4:not(.camera-active) {
+    aspect-ratio: 3/4;
+}
+
 .canvas-container.camera-active {
     position: fixed;
     top: 0;
