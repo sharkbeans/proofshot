@@ -700,7 +700,7 @@ input[type="range"]::-moz-range-track {
 
 .camera-controls {
     position: fixed;
-    bottom: 80px;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
     display: none;
