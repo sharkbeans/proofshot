@@ -909,7 +909,8 @@ const UIManager = {
             }, 100);
         }
 
-        this.showNotification(`Aspect ratio: ${this.cameraAspectRatio}`, 'info');
+        // Hide aspect ratio notification in camera view
+        // this.showNotification(`Aspect ratio: ${this.cameraAspectRatio}`, 'info');
     },
 
     /**
