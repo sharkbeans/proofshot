@@ -873,7 +873,7 @@ input[type="range"]::-moz-range-track {
 
 /* Camera Action Buttons */
 .camera-action-buttons {
-    position: absolute;
+    position: fixed;
     bottom: var(--spacing-lg);
     left: 50%;
     transform: translateX(-50%);
@@ -888,6 +888,28 @@ input[type="range"]::-moz-range-track {
 
 .camera-action-buttons.active {
     display: flex;
+}
+
+/* Mobile view: position below canvas */
+@media (max-width: 767px) {
+    .camera-action-buttons {
+        position: relative;
+        left: 0;
+        transform: none;
+        width: 100%;
+        justify-content: center;
+        margin-top: var(--spacing-md);
+        background: var(--bg-color);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow);
+    }
+}
+
+/* Desktop view: keep fixed positioning for camera mode */
+@media (min-width: 768px) {
+    .camera-action-buttons {
+        max-width: 600px;
+    }
 }
 
 .camera-discard-btn,

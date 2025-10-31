@@ -77,6 +77,7 @@ const UIManager = {
             photocardFlipHBtn: document.getElementById('photocard-flip-h-btn'),
             photocardFlipVBtn: document.getElementById('photocard-flip-v-btn'),
             photocardResetBtn: document.getElementById('photocard-reset-btn'),
+            photocardResetTransformBtn: document.getElementById('photocard-reset-transform-btn'),
 
             // Toploader toggle
             toploaderToggle: document.getElementById('toploader-toggle'),
@@ -245,6 +246,12 @@ const UIManager = {
         this.elements.photocardResetBtn.addEventListener('click', () => {
             this.canvas.resetPhotocard();
             this.syncPhotocardSliders();
+        });
+
+        this.elements.photocardResetTransformBtn.addEventListener('click', () => {
+            this.canvas.resetPhotocard();
+            this.syncPhotocardSliders();
+            this.showNotification('Photocard position and size reset', 'success');
         });
 
         // Toploader toggle
