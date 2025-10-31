@@ -114,8 +114,8 @@ const UIManager = {
             // Save Confirmation Modal
             saveConfirmationModal: document.getElementById('save-confirmation-modal'),
             saveConfirmationModalClose: document.getElementById('save-confirmation-modal-close'),
-            confirmSaveBtn: document.getElementById('confirm-save-btn'),
-            createNewBtn: document.getElementById('create-new-btn')
+            keepEditingBtn: document.getElementById('keep-editing-btn'),
+            discardImageBtn: document.getElementById('discard-image-btn')
         };
     },
 
@@ -336,12 +336,12 @@ const UIManager = {
             }
         });
 
-        this.elements.confirmSaveBtn.addEventListener('click', () => {
-            this.handleConfirmSave();
+        this.elements.keepEditingBtn.addEventListener('click', () => {
+            this.handleKeepEditing();
         });
 
-        this.elements.createNewBtn.addEventListener('click', () => {
-            this.handleCreateNew();
+        this.elements.discardImageBtn.addEventListener('click', () => {
+            this.handleDiscardImage();
         });
 
         // Drag and drop for canvas
@@ -438,12 +438,9 @@ const UIManager = {
                     this.elements.cameraResetPhotocardBtn.classList.remove('active');
                 }
 
-                // Hide upload background and add photocard buttons
+                // Hide upload background button (keep + button visible)
                 if (this.elements.cameraUploadBgBtn) {
                     this.elements.cameraUploadBgBtn.style.display = 'none';
-                }
-                if (this.elements.cameraAddPhotocardBtn) {
-                    this.elements.cameraAddPhotocardBtn.style.display = 'none';
                 }
 
                 // Exit fullscreen mode
@@ -551,7 +548,7 @@ const UIManager = {
     },
 
     /**
-     * Handle save/export - now shows confirmation modal
+     * Handle save/export - saves first, then shows confirmation modal
      */
     async handleSave() {
         if (!this.canvas.backgroundImage) {
@@ -559,8 +556,43 @@ const UIManager = {
             return;
         }
 
-        // Show the save confirmation modal
-        this.openSaveConfirmationModal();
+        // Save/share the image first
+        try {
+            this.showLoading('Exporting...');
+            const isMobile = window.innerWidth <= 767;
+            const canvas = this.canvas.canvas;
+            const filename = `proofshot-${Date.now()}.png`;
+
+            // Use Web Share API on mobile
+            if (isMobile) {
+                const shared = await this.exportImageShare(canvas, filename);
+                if (shared) {
+                    this.showNotification('Shared successfully', 'success');
+                } else {
+                    this.showNotification('Photo saved!', 'success');
+                }
+            } else {
+                // Desktop: standard download
+                const blob = await this.canvas.exportImage();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                this.showNotification('Proofshot saved successfully', 'success');
+            }
+
+            // After saving, show the "What's next?" modal
+            this.openSaveConfirmationModal();
+        } catch (error) {
+            console.error('Error saving:', error);
+            this.showNotification('Failed to save proofshot', 'error');
+        } finally {
+            this.hideLoading();
+        }
     },
 
     /**
@@ -773,51 +805,17 @@ const UIManager = {
     },
 
     /**
-     * Handle confirm save (actual save action)
+     * Handle keep editing - just closes the modal
      */
-    async handleConfirmSave() {
-        // Close the modal first
+    handleKeepEditing() {
+        // Close the modal and continue editing
         this.closeSaveConfirmationModal();
-
-        try {
-            this.showLoading('Exporting...');
-            const isMobile = window.innerWidth <= 767;
-            const canvas = this.canvas.canvas;
-            const filename = `proofshot-${Date.now()}.png`;
-
-            // Use Web Share API on mobile
-            if (isMobile) {
-                const shared = await this.exportImageShare(canvas, filename);
-                if (shared) {
-                    this.showNotification('Shared successfully', 'success');
-                } else {
-                    this.showNotification('Photo saved!', 'success');
-                }
-            } else {
-                // Desktop: standard download
-                const blob = await this.canvas.exportImage();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                this.showNotification('Proofshot saved successfully', 'success');
-            }
-        } catch (error) {
-            console.error('Error saving:', error);
-            this.showNotification('Failed to save proofshot', 'error');
-        } finally {
-            this.hideLoading();
-        }
     },
 
     /**
-     * Handle create new (reopen camera)
+     * Handle discard image - clears canvas and reopens camera
      */
-    async handleCreateNew() {
+    async handleDiscardImage() {
         // Close the modal
         this.closeSaveConfirmationModal();
 
@@ -1072,12 +1070,9 @@ const UIManager = {
                 this.elements.cameraResetPhotocardBtn.classList.remove('active');
             }
 
-            // Hide upload background and add photocard buttons
+            // Hide upload background button (keep + button visible)
             if (this.elements.cameraUploadBgBtn) {
                 this.elements.cameraUploadBgBtn.style.display = 'none';
-            }
-            if (this.elements.cameraAddPhotocardBtn) {
-                this.elements.cameraAddPhotocardBtn.style.display = 'none';
             }
 
             // Exit fullscreen mode but keep aspect ratio
@@ -1308,11 +1303,32 @@ const UIManager = {
     },
 
     /**
-     * Handle camera save - now shows confirmation modal
+     * Handle camera save - saves first, then shows confirmation modal
      */
     async handleCameraSave() {
-        // Show the save confirmation modal
-        this.openSaveConfirmationModal();
+        // Save/share the image first
+        try {
+            this.showLoading('Preparing to share...');
+            const canvas = this.canvas.canvas;
+            const filename = `proofshot-${Date.now()}.png`;
+
+            // Use mobile share API
+            const shared = await this.exportImageShare(canvas, filename);
+
+            if (shared) {
+                this.showNotification('Photo shared successfully!', 'success');
+            } else {
+                this.showNotification('Photo saved!', 'success');
+            }
+
+            // After saving, show the "What's next?" modal
+            this.openSaveConfirmationModal();
+        } catch (error) {
+            console.error('Error saving/sharing photo:', error);
+            this.showNotification('Failed to save photo', 'error');
+        } finally {
+            this.hideLoading();
+        }
     },
 
     /**
