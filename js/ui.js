@@ -789,7 +789,7 @@ const UIManager = {
                 this.elements.toolbar.classList.add('collapsed');
             }
 
-            this.showNotification('Camera started - position your photocard and tap the shutter', 'success');
+            // Don't show notification - keep UI clean
         } catch (error) {
             console.error('Error starting camera:', error);
 
@@ -1041,29 +1041,86 @@ const UIManager = {
     /**
      * Handle camera save
      */
-    handleCameraSave() {
-        // Hide action buttons
-        if (this.elements.cameraActionButtons) {
-            this.elements.cameraActionButtons.classList.remove('active');
+    async handleCameraSave() {
+        try {
+            this.showLoading('Preparing to share...');
+            const canvas = this.canvas.canvas;
+            const filename = `proofshot-${Date.now()}.png`;
+
+            // Use mobile share API
+            const shared = await this.exportImageShare(canvas, filename);
+
+            // Hide action buttons
+            if (this.elements.cameraActionButtons) {
+                this.elements.cameraActionButtons.classList.remove('active');
+            }
+
+            if (shared) {
+                this.showNotification('Photo shared successfully!', 'success');
+            } else {
+                this.showNotification('Photo saved!', 'success');
+            }
+        } catch (error) {
+            console.error('Error saving/sharing photo:', error);
+            this.showNotification('Failed to save photo', 'error');
+        } finally {
+            this.hideLoading();
         }
-        
-        // Exit camera mode completely
-        this.handleCameraClose();
-        this.showNotification('Photo saved!', 'success');
     },
 
     /**
      * Handle camera discard
      */
-    handleCameraDiscard() {
-        // Hide action buttons
-        if (this.elements.cameraActionButtons) {
-            this.elements.cameraActionButtons.classList.remove('active');
+    async handleCameraDiscard() {
+        try {
+            // Hide action buttons
+            if (this.elements.cameraActionButtons) {
+                this.elements.cameraActionButtons.classList.remove('active');
+            }
+
+            // Show close and add photocard buttons again
+            if (this.elements.cameraCloseBtn) {
+                this.elements.cameraCloseBtn.style.display = '';
+            }
+            if (this.elements.cameraAddPhotocardBtn) {
+                this.elements.cameraAddPhotocardBtn.style.display = '';
+            }
+
+            // Clear the background image but keep the photocard
+            this.canvas.backgroundImage = null;
+
+            // Restart camera
+            this.showLoading('Restarting camera...');
+            await this.canvas.startCamera();
+
+            // Show camera controls again
+            if (this.elements.cameraControls) {
+                this.elements.cameraControls.classList.add('active');
+            }
+
+            // Show aspect ratio button
+            if (this.elements.cameraAspectRatioBtn) {
+                this.elements.cameraAspectRatioBtn.classList.add('active');
+            }
+
+            // Make canvas container fullscreen with aspect ratio
+            const canvasContainer = document.querySelector('.canvas-container');
+            if (canvasContainer) {
+                canvasContainer.classList.add('camera-active');
+                this.applyAspectRatio(canvasContainer);
+                // Resize canvas to fit fullscreen
+                setTimeout(() => {
+                    this.canvas.resizeCanvas();
+                }, 100);
+            }
+
+            this.showNotification('Ready to take another photo', 'info');
+        } catch (error) {
+            console.error('Error restarting camera:', error);
+            this.showNotification('Failed to restart camera', 'error');
+        } finally {
+            this.hideLoading();
         }
-        
-        // Restart camera
-        this.handleCameraStart();
-        this.showNotification('Photo discarded', 'info');
     },
 
     /**
