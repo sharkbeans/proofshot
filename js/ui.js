@@ -48,6 +48,9 @@ const UIManager = {
             cameraCloseBtn: document.getElementById('camera-close-btn'),
             cameraAddPhotocardBtn: document.getElementById('camera-add-photocard-btn'),
             cameraAspectRatioBtn: document.getElementById('camera-aspect-ratio-btn'),
+            cameraActionButtons: document.getElementById('camera-action-buttons'),
+            cameraSaveBtn: document.getElementById('camera-save-btn'),
+            cameraDiscardBtn: document.getElementById('camera-discard-btn'),
 
             // Background controls
             bgXSlider: document.getElementById('bg-x-slider'),
@@ -141,6 +144,18 @@ const UIManager = {
         if (this.elements.cameraAspectRatioBtn) {
             this.elements.cameraAspectRatioBtn.addEventListener('click', () => {
                 this.handleAspectRatioToggle();
+            });
+        }
+
+        if (this.elements.cameraSaveBtn) {
+            this.elements.cameraSaveBtn.addEventListener('click', () => {
+                this.handleCameraSave();
+            });
+        }
+
+        if (this.elements.cameraDiscardBtn) {
+            this.elements.cameraDiscardBtn.addEventListener('click', () => {
+                this.handleCameraDiscard();
             });
         }
 
@@ -826,6 +841,11 @@ const UIManager = {
                 }, 100);
             }
 
+            // Show action buttons after capture
+            if (this.elements.cameraActionButtons) {
+                this.elements.cameraActionButtons.classList.add('active');
+            }
+
             // Show success notification with flash effect
             this.showCameraFlash();
             this.showNotification('Photo captured!', 'success');
@@ -996,6 +1016,32 @@ const UIManager = {
 
         this.elements.bgRotationSlider.value = bg.rotation;
         this.elements.bgRotationValue.textContent = Math.round(bg.rotation) + '°';
+    },
+
+    /**
+     * Handle camera save
+     */
+    handleCameraSave() {
+        // Hide action buttons
+        if (this.elements.cameraActionButtons) {
+            this.elements.cameraActionButtons.classList.remove('active');
+        }
+        
+        this.showNotification('Photo saved!', 'success');
+    },
+
+    /**
+     * Handle camera discard
+     */
+    handleCameraDiscard() {
+        // Hide action buttons
+        if (this.elements.cameraActionButtons) {
+            this.elements.cameraActionButtons.classList.remove('active');
+        }
+        
+        // Restart camera
+        this.handleCameraStart();
+        this.showNotification('Photo discarded', 'info');
     },
 
     /**

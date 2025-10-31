@@ -843,23 +843,22 @@ input[type="range"]::-moz-range-track {
 /* Camera Aspect Ratio Button */
 .camera-aspect-ratio-btn {
     position: fixed;
-    top: var(--spacing-lg);
-    right: var(--spacing-lg);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: var(--primary-color);
-    border: 2px solid var(--primary-color);
+    top: var(--spacing-xl);
+    right: var(--spacing-xl);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: black;
+    border: none;
     border-radius: var(--radius-sm);
     color: white;
-    font-weight: 700;
-    font-size: 0.9rem;
+    font-weight: 600;
+    font-size: 0.85rem;
     cursor: pointer;
     display: none;
     align-items: center;
     justify-content: center;
     transition: var(--transition);
-    backdrop-filter: blur(10px);
     z-index: 1002;
-    min-width: 60px;
+    min-width: 50px;
 }
 
 .camera-aspect-ratio-btn.active {
@@ -869,6 +868,49 @@ input[type="range"]::-moz-range-track {
 .camera-aspect-ratio-btn:active {
     background: var(--primary-dark);
     border-color: var(--primary-dark);
+    transform: scale(0.95);
+}
+
+/* Camera Action Buttons */
+.camera-action-buttons {
+    position: fixed;
+    bottom: var(--spacing-xl);
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    gap: var(--spacing-lg);
+    z-index: 1002;
+}
+
+.camera-action-buttons.active {
+    display: flex;
+}
+
+.camera-discard-btn,
+.camera-save-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.camera-discard-btn {
+    background: var(--danger-color);
+    color: white;
+}
+
+.camera-save-btn {
+    background: var(--success-color);
+    color: white;
+}
+
+.camera-discard-btn:active,
+.camera-save-btn:active {
     transform: scale(0.95);
 }
 
