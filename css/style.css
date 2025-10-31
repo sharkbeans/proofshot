@@ -135,30 +135,35 @@ body {
     border-radius: 0;
     z-index: 1000;
     background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .canvas-container.camera-active #proofshot-canvas {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: auto;
-    height: auto;
+    position: relative;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100vw;
+    max-height: 100vh;
 }
 
 .canvas-container.camera-active.aspect-3-4 #proofshot-canvas {
-    width: min(75vh, 100vw);
-    height: min(100vh, 133.33vw);
+    aspect-ratio: 3/4;
+    width: min(75vh, 100vw) !important;
+    height: auto !important;
 }
 
 .canvas-container.camera-active.aspect-9-16 #proofshot-canvas {
-    width: min(56.25vh, 100vw);
-    height: min(100vh, 177.78vw);
+    aspect-ratio: 9/16;
+    width: min(56.25vh, 100vw) !important;
+    height: auto !important;
 }
 
 .canvas-container.camera-active.aspect-1-1 #proofshot-canvas {
-    width: min(100vh, 100vw);
-    height: min(100vh, 100vw);
+    aspect-ratio: 1/1;
+    width: min(100vh, 100vw) !important;
+    height: auto !important;
 }
 
 #proofshot-canvas {

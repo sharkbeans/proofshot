@@ -807,6 +807,14 @@ const UIManager = {
                 canvasContainer.classList.remove('camera-active');
                 // Remove aspect ratio classes
                 canvasContainer.classList.remove('aspect-3-4', 'aspect-9-16', 'aspect-1-1');
+
+                // Reset canvas style
+                const canvas = document.getElementById('proofshot-canvas');
+                if (canvas) {
+                    canvas.style.width = '';
+                    canvas.style.height = '';
+                }
+
                 // Resize canvas back to normal
                 setTimeout(() => {
                     this.canvas.resizeCanvas();
@@ -844,6 +852,14 @@ const UIManager = {
             canvasContainer.classList.remove('camera-active');
             // Remove aspect ratio classes
             canvasContainer.classList.remove('aspect-3-4', 'aspect-9-16', 'aspect-1-1');
+
+            // Reset canvas style
+            const canvas = document.getElementById('proofshot-canvas');
+            if (canvas) {
+                canvas.style.width = '';
+                canvas.style.height = '';
+            }
+
             // Resize canvas back to normal
             setTimeout(() => {
                 this.canvas.resizeCanvas();

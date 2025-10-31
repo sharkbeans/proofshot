@@ -85,19 +85,52 @@ const CanvasManager = {
      */
     resizeCanvas() {
         const container = this.canvas.parentElement;
-        const rect = container.getBoundingClientRect();
+        const isCameraActive = container.classList.contains('camera-active');
+
+        let canvasWidth, canvasHeight;
+
+        if (isCameraActive) {
+            // In camera mode, calculate dimensions based on aspect ratio
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            if (container.classList.contains('aspect-3-4')) {
+                // 3:4 aspect ratio
+                canvasWidth = Math.min(vh * 0.75, vw);
+                canvasHeight = canvasWidth * (4/3);
+            } else if (container.classList.contains('aspect-9-16')) {
+                // 9:16 aspect ratio
+                canvasWidth = Math.min(vh * 0.5625, vw);
+                canvasHeight = canvasWidth * (16/9);
+            } else if (container.classList.contains('aspect-1-1')) {
+                // 1:1 aspect ratio
+                canvasWidth = Math.min(vh, vw);
+                canvasHeight = canvasWidth;
+            } else {
+                // Default to 3:4
+                canvasWidth = Math.min(vh * 0.75, vw);
+                canvasHeight = canvasWidth * (4/3);
+            }
+        } else {
+            // Normal mode - use container dimensions
+            const rect = container.getBoundingClientRect();
+            canvasWidth = rect.width;
+            canvasHeight = rect.height;
+        }
 
         // Set canvas size with device pixel ratio for crisp rendering
         const dpr = window.devicePixelRatio || 1;
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
+        this.canvas.width = canvasWidth * dpr;
+        this.canvas.height = canvasHeight * dpr;
 
         // Scale context to match
         this.ctx.scale(dpr, dpr);
 
-        // Set display size
-        this.canvas.style.width = rect.width + 'px';
-        this.canvas.style.height = rect.height + 'px';
+        // Set display size (CSS handles positioning in camera mode)
+        if (!isCameraActive) {
+            this.canvas.style.width = canvasWidth + 'px';
+            this.canvas.style.height = canvasHeight + 'px';
+        }
 
         this.render();
     },
