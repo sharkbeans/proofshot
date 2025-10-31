@@ -874,7 +874,7 @@ input[type="range"]::-moz-range-track {
 /* Camera Action Buttons */
 .camera-action-buttons {
     position: fixed;
-    bottom: calc(50vh - 37.5vh - var(--spacing-xl));
+    bottom: 56px;
     left: 50%;
     transform: translateX(-50%);
     display: none;
