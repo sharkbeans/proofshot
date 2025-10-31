@@ -652,63 +652,9 @@ input[type="range"]::-moz-range-track {
         padding: var(--spacing-md);
     }
 
-    .toolbar-toggle {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        padding: var(--spacing-md);
-        background: #1a1a1a !important;
-        border: none;
-        border-bottom: 1px solid var(--border-color);
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-        color: white !important;
-        cursor: pointer;
-        transition: var(--transition);
-        margin: 0;
-        flex-shrink: 0;
-    }
-
-    .toolbar-toggle svg {
-        width: 28px;
-        height: 28px;
-        transition: var(--transition);
-        stroke: white !important;
-    }
-
-    .toolbar-toggle.collapsed svg {
-        transform: rotate(180deg);
-    }
-
-    .toolbar-toggle:active {
-        background: var(--bg-secondary) !important;
-    }
-
+    /* Hide toolbar entirely on mobile */
     .toolbar {
-        position: sticky;
-        bottom: 0;
-        max-height: 50vh;
-        overflow-y: auto;
-        transition: var(--transition);
-        padding: 0;
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    }
-
-    .toolbar-section:first-of-type {
-        padding-top: var(--spacing-lg);
-    }
-
-    .toolbar.collapsed {
-        max-height: 56px;
-        overflow: hidden;
-    }
-
-    .toolbar.collapsed .toolbar-section {
-        display: none;
-    }
-
-    .toolbar-section {
-        padding: var(--spacing-lg);
+        display: none !important;
     }
 
     .btn span {
@@ -718,6 +664,108 @@ input[type="range"]::-moz-range-track {
     .btn-primary span,
     .btn-success span {
         display: inline;
+    }
+}
+
+/* ===========================
+   Mobile Home Screen
+   =========================== */
+
+.mobile-home {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+}
+
+.mobile-home.active {
+    display: flex;
+}
+
+.mobile-home-content {
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+}
+
+.mobile-home-icon {
+    margin: 0 auto var(--spacing-xl);
+    color: var(--primary-color);
+    opacity: 0.9;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.9;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.05);
+    }
+}
+
+.mobile-home-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+    letter-spacing: -0.5px;
+}
+
+.mobile-home-description {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xl);
+    line-height: 1.6;
+}
+
+.btn-launch-camera {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-lg);
+    min-width: 200px;
+}
+
+.btn-launch-camera:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(199, 182, 249, 0.4);
+}
+
+.btn-launch-camera:active {
+    transform: scale(0.98);
+}
+
+.btn-launch-camera svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Show mobile home on mobile devices by default */
+@media (max-width: 767px) {
+    .mobile-home.active {
+        display: flex;
     }
 }
 
@@ -800,8 +848,8 @@ input[type="range"]::-moz-range-track {
     transform: scale(0.85);
 }
 
-/* Camera Close and Add Photocard Buttons */
-.camera-close-btn,
+/* Camera Upload Background and Add Photocard Buttons */
+.camera-upload-bg-btn,
 .camera-add-photocard-btn {
     position: fixed;
     bottom: var(--spacing-lg);
@@ -820,7 +868,7 @@ input[type="range"]::-moz-range-track {
     z-index: 1002;
 }
 
-.camera-close-btn {
+.camera-upload-bg-btn {
     left: var(--spacing-lg);
 }
 
@@ -828,13 +876,13 @@ input[type="range"]::-moz-range-track {
     right: var(--spacing-lg);
 }
 
-.camera-close-btn:active,
+.camera-upload-bg-btn:active,
 .camera-add-photocard-btn:active {
     background: rgba(0, 0, 0, 0.8);
     transform: scale(0.9);
 }
 
-.camera-close-btn svg,
+.camera-upload-bg-btn svg,
 .camera-add-photocard-btn svg {
     width: 24px;
     height: 24px;

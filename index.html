@@ -25,6 +25,21 @@
 
         <!-- Main Content -->
         <main class="main-content">
+            <!-- Mobile Home Screen -->
+            <div class="mobile-home" id="mobile-home">
+                <div class="mobile-home-content">
+                    <div class="mobile-home-icon">
+                        <i data-lucide="camera" style="width: 80px; height: 80px;"></i>
+                    </div>
+                    <h2 class="mobile-home-title">Ready to Create?</h2>
+                    <p class="mobile-home-description">Take a photo of your photocard with your camera</p>
+                    <button class="btn-launch-camera" id="launch-camera-btn">
+                        <i data-lucide="camera"></i>
+                        <span>Launch Camera</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Canvas Container -->
             <div class="canvas-container">
                 <canvas id="proofshot-canvas"></canvas>
@@ -38,8 +53,8 @@
                             <div class="shutter-inner"></div>
                         </div>
                     </button>
-                    <button class="camera-close-btn" id="camera-close-btn">
-                        <i data-lucide="x"></i>
+                    <button class="camera-upload-bg-btn" id="camera-upload-bg-btn">
+                        <i data-lucide="image"></i>
                     </button>
                     <button class="camera-add-photocard-btn" id="camera-add-photocard-btn">
                         <i data-lucide="plus"></i>

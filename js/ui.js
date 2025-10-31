@@ -17,6 +17,11 @@ const UIManager = {
         this.attachEventListeners();
         this.initializeLucideIcons();
 
+        // Show mobile home screen on mobile devices
+        if (window.innerWidth <= 767 && this.elements.mobileHome) {
+            this.elements.mobileHome.classList.add('active');
+        }
+
         // Sync photocard sliders with the initial placeholder
         setTimeout(() => {
             this.syncPhotocardSliders();
@@ -28,6 +33,10 @@ const UIManager = {
      */
     cacheElements() {
         this.elements = {
+            // Mobile home
+            mobileHome: document.getElementById('mobile-home'),
+            launchCameraBtn: document.getElementById('launch-camera-btn'),
+
             // Toolbar toggle
             toolbarToggle: document.getElementById('toolbar-toggle'),
             toolbarToggleIcon: document.getElementById('toolbar-toggle-icon'),
@@ -45,7 +54,7 @@ const UIManager = {
             cameraBtn: document.getElementById('camera-btn'),
             cameraControls: document.getElementById('camera-controls'),
             cameraShutterBtn: document.getElementById('camera-shutter-btn'),
-            cameraCloseBtn: document.getElementById('camera-close-btn'),
+            cameraUploadBgBtn: document.getElementById('camera-upload-bg-btn'),
             cameraAddPhotocardBtn: document.getElementById('camera-add-photocard-btn'),
             cameraAspectRatioBtn: document.getElementById('camera-aspect-ratio-btn'),
             cameraResetPhotocardBtn: document.getElementById('camera-reset-photocard-btn'),
@@ -108,6 +117,13 @@ const UIManager = {
      * Attach event listeners to UI elements
      */
     attachEventListeners() {
+        // Mobile home launch camera button
+        if (this.elements.launchCameraBtn) {
+            this.elements.launchCameraBtn.addEventListener('click', () => {
+                this.handleLaunchCamera();
+            });
+        }
+
         // Upload buttons
         this.elements.uploadBgBtn.addEventListener('click', () => {
             this.elements.bgFileInput.click();
@@ -131,9 +147,9 @@ const UIManager = {
             });
         }
 
-        if (this.elements.cameraCloseBtn) {
-            this.elements.cameraCloseBtn.addEventListener('click', () => {
-                this.handleCameraClose();
+        if (this.elements.cameraUploadBgBtn) {
+            this.elements.cameraUploadBgBtn.addEventListener('click', () => {
+                this.handleCameraUploadBackground();
             });
         }
 
@@ -378,9 +394,43 @@ const UIManager = {
 
         try {
             this.showLoading('Loading background...');
+
+            // If camera is active, stop it
+            if (this.canvas.camera.active) {
+                this.canvas.stopCamera();
+
+                // Hide camera controls
+                if (this.elements.cameraControls) {
+                    this.elements.cameraControls.classList.remove('active');
+                }
+                if (this.elements.cameraAspectRatioBtn) {
+                    this.elements.cameraAspectRatioBtn.classList.remove('active');
+                }
+                if (this.elements.cameraResetPhotocardBtn) {
+                    this.elements.cameraResetPhotocardBtn.classList.remove('active');
+                }
+
+                // Exit fullscreen mode
+                const canvasContainer = document.querySelector('.canvas-container');
+                if (canvasContainer) {
+                    canvasContainer.classList.remove('camera-active');
+                    const canvas = document.getElementById('proofshot-canvas');
+                    if (canvas) {
+                        canvas.style.width = '';
+                        canvas.style.height = '';
+                    }
+                }
+            }
+
             await this.canvas.loadBackground(file);
             this.hideCanvasOverlay();
             this.syncBackgroundSliders();
+
+            // Resize canvas after upload
+            setTimeout(() => {
+                this.canvas.resizeCanvas();
+            }, 100);
+
             this.showNotification('Background loaded successfully', 'success');
         } catch (error) {
             console.error('Error loading background:', error);
@@ -754,6 +804,19 @@ const UIManager = {
     },
 
     /**
+     * Handle launch camera from mobile home
+     */
+    async handleLaunchCamera() {
+        // Hide mobile home
+        if (this.elements.mobileHome) {
+            this.elements.mobileHome.classList.remove('active');
+        }
+
+        // Start camera
+        await this.handleCameraStart();
+    },
+
+    /**
      * Handle camera start
      */
     async handleCameraStart() {
@@ -844,9 +907,9 @@ const UIManager = {
                 this.elements.cameraResetPhotocardBtn.classList.remove('active');
             }
 
-            // Hide close and add photocard buttons
-            if (this.elements.cameraCloseBtn) {
-                this.elements.cameraCloseBtn.style.display = 'none';
+            // Hide upload background and add photocard buttons
+            if (this.elements.cameraUploadBgBtn) {
+                this.elements.cameraUploadBgBtn.style.display = 'none';
             }
             if (this.elements.cameraAddPhotocardBtn) {
                 this.elements.cameraAddPhotocardBtn.style.display = 'none';
@@ -934,6 +997,16 @@ const UIManager = {
         }
 
         this.showNotification('Camera closed', 'info');
+    },
+
+    /**
+     * Handle upload background from camera
+     */
+    handleCameraUploadBackground() {
+        // Trigger background upload
+        if (this.elements.bgFileInput) {
+            this.elements.bgFileInput.click();
+        }
     },
 
     /**
@@ -1109,9 +1182,9 @@ const UIManager = {
                 this.elements.cameraActionButtons.classList.remove('active');
             }
 
-            // Show close and add photocard buttons again
-            if (this.elements.cameraCloseBtn) {
-                this.elements.cameraCloseBtn.style.display = '';
+            // Show upload background and add photocard buttons again
+            if (this.elements.cameraUploadBgBtn) {
+                this.elements.cameraUploadBgBtn.style.display = '';
             }
             if (this.elements.cameraAddPhotocardBtn) {
                 this.elements.cameraAddPhotocardBtn.style.display = '';
