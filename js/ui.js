@@ -395,6 +395,9 @@ const UIManager = {
         try {
             this.showLoading('Loading background...');
 
+            // Track if we were in camera mode
+            const wasInCameraMode = this.canvas.camera.active;
+
             // If camera is active, stop it
             if (this.canvas.camera.active) {
                 this.canvas.stopCamera();
@@ -408,6 +411,14 @@ const UIManager = {
                 }
                 if (this.elements.cameraResetPhotocardBtn) {
                     this.elements.cameraResetPhotocardBtn.classList.remove('active');
+                }
+
+                // Hide upload background and add photocard buttons
+                if (this.elements.cameraUploadBgBtn) {
+                    this.elements.cameraUploadBgBtn.style.display = 'none';
+                }
+                if (this.elements.cameraAddPhotocardBtn) {
+                    this.elements.cameraAddPhotocardBtn.style.display = 'none';
                 }
 
                 // Exit fullscreen mode
@@ -430,6 +441,13 @@ const UIManager = {
             setTimeout(() => {
                 this.canvas.resizeCanvas();
             }, 100);
+
+            // If we were in camera mode and on mobile, show action buttons
+            if (wasInCameraMode && window.innerWidth <= 767) {
+                if (this.elements.cameraActionButtons) {
+                    this.elements.cameraActionButtons.classList.add('active');
+                }
+            }
 
             this.showNotification('Background loaded successfully', 'success');
         } catch (error) {
@@ -1182,51 +1200,64 @@ const UIManager = {
                 this.elements.cameraActionButtons.classList.remove('active');
             }
 
-            // Show upload background and add photocard buttons again
-            if (this.elements.cameraUploadBgBtn) {
-                this.elements.cameraUploadBgBtn.style.display = '';
-            }
-            if (this.elements.cameraAddPhotocardBtn) {
-                this.elements.cameraAddPhotocardBtn.style.display = '';
-            }
-
             // Clear the background image but keep the photocard
             this.canvas.backgroundImage = null;
 
-            // Restart camera
-            this.showLoading('Restarting camera...');
-            await this.canvas.startCamera();
+            // On mobile, return to home screen
+            if (window.innerWidth <= 767) {
+                // Show mobile home screen
+                if (this.elements.mobileHome) {
+                    this.elements.mobileHome.classList.add('active');
+                }
 
-            // Show camera controls again
-            if (this.elements.cameraControls) {
-                this.elements.cameraControls.classList.add('active');
+                // Reset canvas
+                this.canvas.render();
+                this.showNotification('Discarded', 'info');
+            } else {
+                // On desktop, restart camera
+                // Show upload background and add photocard buttons again
+                if (this.elements.cameraUploadBgBtn) {
+                    this.elements.cameraUploadBgBtn.style.display = '';
+                }
+                if (this.elements.cameraAddPhotocardBtn) {
+                    this.elements.cameraAddPhotocardBtn.style.display = '';
+                }
+
+                // Restart camera
+                this.showLoading('Restarting camera...');
+                await this.canvas.startCamera();
+
+                // Show camera controls again
+                if (this.elements.cameraControls) {
+                    this.elements.cameraControls.classList.add('active');
+                }
+
+                // Show aspect ratio button
+                if (this.elements.cameraAspectRatioBtn) {
+                    this.elements.cameraAspectRatioBtn.classList.add('active');
+                }
+
+                // Show reset photocard button
+                if (this.elements.cameraResetPhotocardBtn) {
+                    this.elements.cameraResetPhotocardBtn.classList.add('active');
+                }
+
+                // Make canvas container fullscreen with aspect ratio
+                const canvasContainer = document.querySelector('.canvas-container');
+                if (canvasContainer) {
+                    canvasContainer.classList.add('camera-active');
+                    this.applyAspectRatio(canvasContainer);
+                    // Resize canvas to fit fullscreen
+                    setTimeout(() => {
+                        this.canvas.resizeCanvas();
+                    }, 100);
+                }
+
+                this.showNotification('Ready to take another photo', 'info');
             }
-
-            // Show aspect ratio button
-            if (this.elements.cameraAspectRatioBtn) {
-                this.elements.cameraAspectRatioBtn.classList.add('active');
-            }
-
-            // Show reset photocard button
-            if (this.elements.cameraResetPhotocardBtn) {
-                this.elements.cameraResetPhotocardBtn.classList.add('active');
-            }
-
-            // Make canvas container fullscreen with aspect ratio
-            const canvasContainer = document.querySelector('.canvas-container');
-            if (canvasContainer) {
-                canvasContainer.classList.add('camera-active');
-                this.applyAspectRatio(canvasContainer);
-                // Resize canvas to fit fullscreen
-                setTimeout(() => {
-                    this.canvas.resizeCanvas();
-                }, 100);
-            }
-
-            this.showNotification('Ready to take another photo', 'info');
         } catch (error) {
-            console.error('Error restarting camera:', error);
-            this.showNotification('Failed to restart camera', 'error');
+            console.error('Error handling discard:', error);
+            this.showNotification('Failed to discard', 'error');
         } finally {
             this.hideLoading();
         }
