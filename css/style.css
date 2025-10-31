@@ -871,6 +871,43 @@ input[type="range"]::-moz-range-track {
     transform: scale(0.95);
 }
 
+/* Camera Reset Photocard Button */
+.camera-reset-photocard-btn {
+    position: fixed;
+    top: var(--spacing-xl);
+    left: var(--spacing-xl);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: black;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    gap: var(--spacing-xs);
+    justify-content: center;
+    transition: var(--transition);
+    z-index: 1002;
+    min-width: 50px;
+}
+
+.camera-reset-photocard-btn.active {
+    display: flex;
+}
+
+.camera-reset-photocard-btn:active {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: scale(0.95);
+}
+
+.camera-reset-photocard-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
 /* Camera Action Buttons */
 .camera-action-buttons {
     position: fixed;

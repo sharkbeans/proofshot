@@ -48,6 +48,7 @@ const UIManager = {
             cameraCloseBtn: document.getElementById('camera-close-btn'),
             cameraAddPhotocardBtn: document.getElementById('camera-add-photocard-btn'),
             cameraAspectRatioBtn: document.getElementById('camera-aspect-ratio-btn'),
+            cameraResetPhotocardBtn: document.getElementById('camera-reset-photocard-btn'),
             cameraActionButtons: document.getElementById('camera-action-buttons'),
             cameraSaveBtn: document.getElementById('camera-save-btn'),
             cameraDiscardBtn: document.getElementById('camera-discard-btn'),
@@ -145,6 +146,12 @@ const UIManager = {
         if (this.elements.cameraAspectRatioBtn) {
             this.elements.cameraAspectRatioBtn.addEventListener('click', () => {
                 this.handleAspectRatioToggle();
+            });
+        }
+
+        if (this.elements.cameraResetPhotocardBtn) {
+            this.elements.cameraResetPhotocardBtn.addEventListener('click', () => {
+                this.handleCameraResetPhotocard();
             });
         }
 
@@ -770,6 +777,11 @@ const UIManager = {
                 this.elements.cameraAspectRatioBtn.classList.add('active');
             }
 
+            // Show reset photocard button
+            if (this.elements.cameraResetPhotocardBtn) {
+                this.elements.cameraResetPhotocardBtn.classList.add('active');
+            }
+
             // Make canvas container fullscreen with aspect ratio
             const canvasContainer = document.querySelector('.canvas-container');
             if (canvasContainer) {
@@ -825,6 +837,11 @@ const UIManager = {
             // Hide aspect ratio button
             if (this.elements.cameraAspectRatioBtn) {
                 this.elements.cameraAspectRatioBtn.classList.remove('active');
+            }
+
+            // Hide reset photocard button
+            if (this.elements.cameraResetPhotocardBtn) {
+                this.elements.cameraResetPhotocardBtn.classList.remove('active');
             }
 
             // Hide close and add photocard buttons
@@ -886,6 +903,11 @@ const UIManager = {
             this.elements.cameraAspectRatioBtn.classList.remove('active');
         }
 
+        // Hide reset photocard button
+        if (this.elements.cameraResetPhotocardBtn) {
+            this.elements.cameraResetPhotocardBtn.classList.remove('active');
+        }
+
         // Hide action buttons
         if (this.elements.cameraActionButtons) {
             this.elements.cameraActionButtons.classList.remove('active');
@@ -922,6 +944,15 @@ const UIManager = {
         if (this.elements.photocardFileInput) {
             this.elements.photocardFileInput.click();
         }
+    },
+
+    /**
+     * Handle camera reset photocard
+     */
+    handleCameraResetPhotocard() {
+        this.canvas.resetPhotocard();
+        this.syncPhotocardSliders();
+        this.showNotification('Photocard position reset', 'success');
     },
 
     /**
@@ -1101,6 +1132,11 @@ const UIManager = {
             // Show aspect ratio button
             if (this.elements.cameraAspectRatioBtn) {
                 this.elements.cameraAspectRatioBtn.classList.add('active');
+            }
+
+            // Show reset photocard button
+            if (this.elements.cameraResetPhotocardBtn) {
+                this.elements.cameraResetPhotocardBtn.classList.add('active');
             }
 
             // Make canvas container fullscreen with aspect ratio
