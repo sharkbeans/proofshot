@@ -5,6 +5,7 @@
 
 const UIManager = {
     elements: {},
+    cameraAspectRatio: '3:4', // Default aspect ratio
 
     /**
      * Initialize UI manager
@@ -44,7 +45,8 @@ const UIManager = {
             cameraControls: document.getElementById('camera-controls'),
             cameraShutterBtn: document.getElementById('camera-shutter-btn'),
             cameraCloseBtn: document.getElementById('camera-close-btn'),
-            cameraFlipBtn: document.getElementById('camera-flip-btn'),
+            cameraAddPhotocardBtn: document.getElementById('camera-add-photocard-btn'),
+            cameraAspectRatioBtn: document.getElementById('camera-aspect-ratio-btn'),
 
             // Background controls
             bgXSlider: document.getElementById('bg-x-slider'),
@@ -129,9 +131,15 @@ const UIManager = {
             });
         }
 
-        if (this.elements.cameraFlipBtn) {
-            this.elements.cameraFlipBtn.addEventListener('click', () => {
-                this.handleCameraFlip();
+        if (this.elements.cameraAddPhotocardBtn) {
+            this.elements.cameraAddPhotocardBtn.addEventListener('click', () => {
+                this.handleCameraAddPhotocard();
+            });
+        }
+
+        if (this.elements.cameraAspectRatioBtn) {
+            this.elements.cameraAspectRatioBtn.addEventListener('click', () => {
+                this.handleAspectRatioToggle();
             });
         }
 
@@ -734,10 +742,16 @@ const UIManager = {
                 this.elements.cameraControls.classList.add('active');
             }
 
-            // Make canvas container fullscreen
+            // Show aspect ratio button
+            if (this.elements.cameraAspectRatioBtn) {
+                this.elements.cameraAspectRatioBtn.classList.add('active');
+            }
+
+            // Make canvas container fullscreen with aspect ratio
             const canvasContainer = document.querySelector('.canvas-container');
             if (canvasContainer) {
                 canvasContainer.classList.add('camera-active');
+                this.applyAspectRatio(canvasContainer);
                 // Resize canvas to fit fullscreen
                 setTimeout(() => {
                     this.canvas.resizeCanvas();
@@ -782,10 +796,17 @@ const UIManager = {
                 this.elements.cameraControls.classList.remove('active');
             }
 
+            // Hide aspect ratio button
+            if (this.elements.cameraAspectRatioBtn) {
+                this.elements.cameraAspectRatioBtn.classList.remove('active');
+            }
+
             // Exit fullscreen mode
             const canvasContainer = document.querySelector('.canvas-container');
             if (canvasContainer) {
                 canvasContainer.classList.remove('camera-active');
+                // Remove aspect ratio classes
+                canvasContainer.classList.remove('aspect-3-4', 'aspect-9-16', 'aspect-1-1');
                 // Resize canvas back to normal
                 setTimeout(() => {
                     this.canvas.resizeCanvas();
@@ -812,10 +833,17 @@ const UIManager = {
             this.elements.cameraControls.classList.remove('active');
         }
 
+        // Hide aspect ratio button
+        if (this.elements.cameraAspectRatioBtn) {
+            this.elements.cameraAspectRatioBtn.classList.remove('active');
+        }
+
         // Exit fullscreen mode
         const canvasContainer = document.querySelector('.canvas-container');
         if (canvasContainer) {
             canvasContainer.classList.remove('camera-active');
+            // Remove aspect ratio classes
+            canvasContainer.classList.remove('aspect-3-4', 'aspect-9-16', 'aspect-1-1');
             // Resize canvas back to normal
             setTimeout(() => {
                 this.canvas.resizeCanvas();
@@ -826,18 +854,61 @@ const UIManager = {
     },
 
     /**
-     * Handle camera flip
+     * Handle add photocard from camera
      */
-    async handleCameraFlip() {
-        try {
-            this.showLoading('Flipping camera...');
-            await this.canvas.flipCamera();
-            this.showNotification('Camera flipped', 'success');
-        } catch (error) {
-            console.error('Error flipping camera:', error);
-            this.showNotification('Failed to flip camera', 'error');
-        } finally {
-            this.hideLoading();
+    handleCameraAddPhotocard() {
+        // Trigger photocard upload
+        if (this.elements.photocardFileInput) {
+            this.elements.photocardFileInput.click();
+        }
+    },
+
+    /**
+     * Handle aspect ratio toggle
+     */
+    handleAspectRatioToggle() {
+        // Cycle through aspect ratios: 3:4 -> 9:16 -> 1:1 -> 3:4
+        const ratios = ['3:4', '9:16', '1:1'];
+        const currentIndex = ratios.indexOf(this.cameraAspectRatio);
+        const nextIndex = (currentIndex + 1) % ratios.length;
+        this.cameraAspectRatio = ratios[nextIndex];
+
+        // Update button text
+        if (this.elements.cameraAspectRatioBtn) {
+            this.elements.cameraAspectRatioBtn.textContent = this.cameraAspectRatio;
+        }
+
+        // Apply new aspect ratio
+        const canvasContainer = document.querySelector('.canvas-container');
+        if (canvasContainer) {
+            this.applyAspectRatio(canvasContainer);
+            // Resize canvas
+            setTimeout(() => {
+                this.canvas.resizeCanvas();
+            }, 100);
+        }
+
+        this.showNotification(`Aspect ratio: ${this.cameraAspectRatio}`, 'info');
+    },
+
+    /**
+     * Apply aspect ratio class to container
+     */
+    applyAspectRatio(container) {
+        // Remove all aspect ratio classes
+        container.classList.remove('aspect-3-4', 'aspect-9-16', 'aspect-1-1');
+
+        // Add the current aspect ratio class
+        switch (this.cameraAspectRatio) {
+            case '3:4':
+                container.classList.add('aspect-3-4');
+                break;
+            case '9:16':
+                container.classList.add('aspect-9-16');
+                break;
+            case '1:1':
+                container.classList.add('aspect-1-1');
+                break;
         }
     },
 
