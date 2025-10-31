@@ -170,11 +170,23 @@ const CanvasManager = {
 
             // Check if click is on the photocard
             if (this.isPointOnPhotocard(x, y)) {
+                // Add visual feedback
+                const originalScale = this.photocard.scale;
+                this.photocard.scale *= 0.95;
+                this.render();
+
                 // Trigger photocard upload
                 const photocardFileInput = document.getElementById('photocard-file-input');
                 if (photocardFileInput) {
                     photocardFileInput.click();
                 }
+
+                // Reset scale after a brief moment
+                setTimeout(() => {
+                    this.photocard.scale = originalScale;
+                    this.render();
+                }, 150);
+
                 return;
             }
         }
@@ -517,15 +529,20 @@ const CanvasManager = {
             <svg width="600" height="900" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#c7b6f9;stop-opacity:0.2" />
-                        <stop offset="100%" style="stop-color:#6dd5a0;stop-opacity:0.15" />
+                        <stop offset="0%" style="stop-color:#c7b6f9;stop-opacity:0.25" />
+                        <stop offset="100%" style="stop-color:#6dd5a0;stop-opacity:0.2" />
                     </linearGradient>
                 </defs>
-                <rect width="600" height="900" rx="30" fill="url(#cardGrad)" stroke="#c7b6f9" stroke-width="3" opacity="0.6"/>
-                <circle cx="300" cy="380" r="50" fill="#c7b6f9" opacity="0.3"/>
-                <path d="M 280 380 L 300 360 L 320 380 L 300 400 Z" fill="#c7b6f9" opacity="0.6"/>
-                <text x="300" y="470" font-family="Arial, sans-serif" font-size="32" fill="#c7b6f9" text-anchor="middle" opacity="0.7">Photocard</text>
-                <text x="300" y="510" font-family="Arial, sans-serif" font-size="25" fill="#a0aec0" text-anchor="middle" opacity="0.7">Click + to upload photocard</text>
+                <rect width="600" height="900" rx="30" fill="url(#cardGrad)" stroke="#c7b6f9" stroke-width="4" opacity="0.7" stroke-dasharray="20,10"/>
+
+                <!-- Upload Icon -->
+                <circle cx="300" cy="380" r="60" fill="#c7b6f9" opacity="0.2"/>
+                <path d="M 300 340 L 300 400 M 280 360 L 300 340 L 320 360" stroke="#c7b6f9" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+                <rect x="270" y="400" width="60" height="8" rx="4" fill="#c7b6f9" opacity="0.8"/>
+
+                <!-- Text -->
+                <text x="300" y="480" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#c7b6f9" text-anchor="middle" opacity="0.9">Tap to Upload</text>
+                <text x="300" y="520" font-family="Arial, sans-serif" font-size="28" fill="#a0aec0" text-anchor="middle" opacity="0.8">Your Photocard</text>
             </svg>
         `;
 
@@ -533,6 +550,9 @@ const CanvasManager = {
         img.onload = () => {
             this.photocardImage = img;
             this.isPlaceholder = true;
+
+            // Add placeholder-active class for animation
+            this.canvas.classList.add('placeholder-active');
 
             // Center photocard on canvas
             const rect = this.canvas.getBoundingClientRect();
@@ -557,6 +577,9 @@ const CanvasManager = {
                 img.onload = () => {
                     this.photocardImage = img;
                     this.isPlaceholder = false;
+
+                    // Remove placeholder-active class
+                    this.canvas.classList.remove('placeholder-active');
 
                     // Reset cursor to grab
                     this.canvas.style.cursor = 'grab';

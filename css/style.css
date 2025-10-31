@@ -184,10 +184,25 @@ body {
     width: 100%;
     height: 100%;
     cursor: grab;
+    transition: opacity 0.3s ease;
 }
 
 #proofshot-canvas:active {
     cursor: grabbing;
+}
+
+/* Add subtle pulse effect when hovering over placeholder */
+#proofshot-canvas.placeholder-active {
+    animation: placeholderPulse 2s ease-in-out infinite;
+}
+
+@keyframes placeholderPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.85;
+    }
 }
 
 .canvas-overlay {
