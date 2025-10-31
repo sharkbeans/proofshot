@@ -148,9 +148,45 @@ const CanvasManager = {
         this.canvas.addEventListener('pointerup', (e) => this.handlePointerUp(e));
         this.canvas.addEventListener('pointercancel', (e) => this.handlePointerUp(e));
 
-        // Prevent default touch behaviors
-        this.canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+        // Prevent default touch behaviors (but allow placeholder clicks)
+        this.canvas.addEventListener('touchstart', (e) => {
+            // If placeholder is tapped, check if it's on the photocard area
+            if (this.isPlaceholder && e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = this.canvas.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+
+                // If tap is on placeholder, don't prevent default yet
+                // Let the pointer event handle it
+                if (this.isPointOnPhotocard(x, y)) {
+                    return;
+                }
+            }
+            e.preventDefault();
+        }, { passive: false });
+
         this.canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+        // Add explicit click handler for mobile placeholder (as a fallback)
+        this.canvas.addEventListener('click', (e) => {
+            if (!this.photocardImage || !this.isPlaceholder) return;
+
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (this.isPointOnPhotocard(x, y)) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Trigger upload
+                const photocardFileInput = document.getElementById('photocard-file-input');
+                if (photocardFileInput) {
+                    photocardFileInput.click();
+                }
+            }
+        });
 
         // Mouse wheel for zoom (desktop)
         this.canvas.addEventListener('wheel', (e) => this.handleWheel(e), { passive: false });
@@ -175,7 +211,7 @@ const CanvasManager = {
                 this.photocard.scale *= 0.95;
                 this.render();
 
-                // Trigger photocard upload
+                // Trigger photocard upload immediately (must be synchronous for mobile)
                 const photocardFileInput = document.getElementById('photocard-file-input');
                 if (photocardFileInput) {
                     photocardFileInput.click();
@@ -187,6 +223,9 @@ const CanvasManager = {
                     this.render();
                 }, 150);
 
+                // Prevent event from continuing to gesture handlers
+                e.preventDefault();
+                e.stopPropagation();
                 return;
             }
         }
