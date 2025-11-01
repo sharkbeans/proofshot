@@ -197,6 +197,9 @@ const CanvasManager = {
      */
     handlePointerDown(e) {
         if (!this.photocardImage) return;
+        
+        // Prevent interaction when modals are open
+        if (document.querySelector('.modal.active')) return;
 
         // If placeholder is clicked, trigger upload dialog
         if (this.isPlaceholder && this.gesture.pointers.length === 0) {
@@ -259,6 +262,9 @@ const CanvasManager = {
      * Handle pointer move (touch/mouse move)
      */
     handlePointerMove(e) {
+        // Prevent interaction when modals are open
+        if (document.querySelector('.modal.active')) return;
+        
         // Update cursor if hovering over placeholder
         if (this.isPlaceholder && !this.gesture.active) {
             const rect = this.canvas.getBoundingClientRect();
