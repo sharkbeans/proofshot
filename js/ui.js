@@ -1099,6 +1099,13 @@ const UIManager = {
             // Show action buttons after capture
             if (this.elements.cameraActionButtons) {
                 this.elements.cameraActionButtons.classList.add('active');
+                
+                // Auto-scroll to action buttons on mobile
+                if (window.innerWidth <= 767) {
+                    setTimeout(() => {
+                        this.elements.cameraActionButtons.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 150);
+                }
             }
 
             // Show success notification with flash effect
