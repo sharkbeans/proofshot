@@ -957,13 +957,13 @@ const UIManager = {
 
         document.body.appendChild(toast);
 
-        // Remove after 3 seconds
+        // Remove after 1.5 seconds
         setTimeout(() => {
             toast.style.animation = 'slideOut 0.3s ease-out';
             setTimeout(() => {
                 document.body.removeChild(toast);
             }, 300);
-        }, 3000);
+        }, 1000);
     },
 
     /**
