@@ -829,8 +829,8 @@ const CanvasManager = {
 
         const x = -(toploaderWidth / 2);
         const y = -(height / 2) - overlap;
-        const topCornerRadius = 80;
-        const bottomCornerRadius = 48;
+        const topCornerRadius = 56;
+        const bottomCornerRadius = 33.6;
         const frameThickness = 9; // thick plastic edges
 
         this.ctx.save();
@@ -864,8 +864,8 @@ const CanvasManager = {
         this.ctx.closePath();
 
         const westGradient = this.ctx.createLinearGradient(x, y, x + topCornerRadius * 0.8, y);
-        westGradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
-        westGradient.addColorStop(0.6, 'rgba(245, 245, 250, 0.2)');
+        westGradient.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
+        westGradient.addColorStop(0.6, 'rgba(245, 245, 250, 0.26)');
         westGradient.addColorStop(1, 'rgba(235, 235, 245, 0)');
         this.ctx.fillStyle = westGradient;
         this.ctx.fill();
@@ -884,8 +884,8 @@ const CanvasManager = {
         this.ctx.closePath();
 
         const eastGradient = this.ctx.createLinearGradient(x + toploaderWidth, y, x + toploaderWidth - topCornerRadius * 0.8, y);
-        eastGradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
-        eastGradient.addColorStop(0.6, 'rgba(245, 245, 250, 0.2)');
+        eastGradient.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
+        eastGradient.addColorStop(0.6, 'rgba(245, 245, 250, 0.26)');
         eastGradient.addColorStop(1, 'rgba(235, 235, 245, 0)');
         this.ctx.fillStyle = eastGradient;
         this.ctx.fill();
@@ -902,9 +902,9 @@ const CanvasManager = {
         this.ctx.closePath();
 
         const southGradient = this.ctx.createLinearGradient(southBorderStart, y + toploaderHeight, southBorderEnd, y + toploaderHeight);
-        southGradient.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
-        southGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
-        southGradient.addColorStop(1, 'rgba(255, 255, 255, 0.25)');
+        southGradient.addColorStop(0, 'rgba(255, 255, 255, 0.325)');
+        southGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.65)');
+        southGradient.addColorStop(1, 'rgba(255, 255, 255, 0.325)');
         this.ctx.fillStyle = southGradient;
         this.ctx.fill();
 
