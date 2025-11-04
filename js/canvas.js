@@ -831,7 +831,8 @@ const CanvasManager = {
         const y = -(height / 2) - overlap;
         const topCornerRadius = 56;
         const bottomCornerRadius = 33.6;
-        const frameThickness = 9; // thick plastic edges
+        const frameThicknessLeft = 6.3; // left border thickness
+        const frameThicknessRight = 3.9; // right border thickness
 
         this.ctx.save();
 
@@ -856,10 +857,10 @@ const CanvasManager = {
         this.ctx.arcTo(x, y, x, y + topCornerRadius, topCornerRadius);
         this.ctx.lineTo(x, y + toploaderHeight - bottomCornerRadius);
         this.ctx.arcTo(x, y + toploaderHeight, x + bottomCornerRadius, y + toploaderHeight, bottomCornerRadius);
-        this.ctx.lineTo(x + frameThickness + (bottomCornerRadius - frameThickness), y + toploaderHeight - frameThickness);
-        this.ctx.arcTo(x + frameThickness, y + toploaderHeight - frameThickness, x + frameThickness, y + toploaderHeight - frameThickness - (bottomCornerRadius - frameThickness), bottomCornerRadius - frameThickness);
-        this.ctx.lineTo(x + frameThickness, y + frameThickness + (topCornerRadius - frameThickness));
-        this.ctx.arcTo(x + frameThickness, y + frameThickness, x + frameThickness + (topCornerRadius - frameThickness), y + frameThickness, topCornerRadius - frameThickness);
+        this.ctx.lineTo(x + frameThicknessLeft + (bottomCornerRadius - frameThicknessLeft), y + toploaderHeight - frameThicknessLeft);
+        this.ctx.arcTo(x + frameThicknessLeft, y + toploaderHeight - frameThicknessLeft, x + frameThicknessLeft, y + toploaderHeight - frameThicknessLeft - (bottomCornerRadius - frameThicknessLeft), bottomCornerRadius - frameThicknessLeft);
+        this.ctx.lineTo(x + frameThicknessLeft, y + frameThicknessLeft + (topCornerRadius - frameThicknessLeft));
+        this.ctx.arcTo(x + frameThicknessLeft, y + frameThicknessLeft, x + frameThicknessLeft + (topCornerRadius - frameThicknessLeft), y + frameThicknessLeft, topCornerRadius - frameThicknessLeft);
         this.ctx.lineTo(x + topCornerRadius, y);
         this.ctx.closePath();
 
@@ -876,10 +877,10 @@ const CanvasManager = {
         this.ctx.arcTo(x + toploaderWidth, y, x + toploaderWidth, y + topCornerRadius, topCornerRadius);
         this.ctx.lineTo(x + toploaderWidth, y + toploaderHeight - bottomCornerRadius);
         this.ctx.arcTo(x + toploaderWidth, y + toploaderHeight, x + toploaderWidth - bottomCornerRadius, y + toploaderHeight, bottomCornerRadius);
-        this.ctx.lineTo(x + toploaderWidth - frameThickness - (bottomCornerRadius - frameThickness), y + toploaderHeight - frameThickness);
-        this.ctx.arcTo(x + toploaderWidth - frameThickness, y + toploaderHeight - frameThickness, x + toploaderWidth - frameThickness, y + toploaderHeight - frameThickness - (bottomCornerRadius - frameThickness), bottomCornerRadius - frameThickness);
-        this.ctx.lineTo(x + toploaderWidth - frameThickness, y + frameThickness + (topCornerRadius - frameThickness));
-        this.ctx.arcTo(x + toploaderWidth - frameThickness, y + frameThickness, x + toploaderWidth - frameThickness - (topCornerRadius - frameThickness), y + frameThickness, topCornerRadius - frameThickness);
+        this.ctx.lineTo(x + toploaderWidth - frameThicknessRight - (bottomCornerRadius - frameThicknessRight), y + toploaderHeight - frameThicknessRight);
+        this.ctx.arcTo(x + toploaderWidth - frameThicknessRight, y + toploaderHeight - frameThicknessRight, x + toploaderWidth - frameThicknessRight, y + toploaderHeight - frameThicknessRight - (bottomCornerRadius - frameThicknessRight), bottomCornerRadius - frameThicknessRight);
+        this.ctx.lineTo(x + toploaderWidth - frameThicknessRight, y + frameThicknessRight + (topCornerRadius - frameThicknessRight));
+        this.ctx.arcTo(x + toploaderWidth - frameThicknessRight, y + frameThicknessRight, x + toploaderWidth - frameThicknessRight - (topCornerRadius - frameThicknessRight), y + frameThicknessRight, topCornerRadius - frameThicknessRight);
         this.ctx.lineTo(x + toploaderWidth - topCornerRadius, y);
         this.ctx.closePath();
 
@@ -893,12 +894,13 @@ const CanvasManager = {
         // 4. South (bottom) side - white border (shortened)
         const southBorderStart = x + bottomCornerRadius * 1;
         const southBorderEnd = x + toploaderWidth - bottomCornerRadius * 1;
-        
+        const frameThicknessBottom = frameThicknessLeft;
+
         this.ctx.beginPath();
         this.ctx.moveTo(southBorderStart, y + toploaderHeight);
         this.ctx.lineTo(southBorderEnd, y + toploaderHeight);
-        this.ctx.lineTo(southBorderEnd, y + toploaderHeight - frameThickness);
-        this.ctx.lineTo(southBorderStart, y + toploaderHeight - frameThickness);
+        this.ctx.lineTo(southBorderEnd, y + toploaderHeight - frameThicknessBottom);
+        this.ctx.lineTo(southBorderStart, y + toploaderHeight - frameThicknessBottom);
         this.ctx.closePath();
 
         const southGradient = this.ctx.createLinearGradient(southBorderStart, y + toploaderHeight, southBorderEnd, y + toploaderHeight);
@@ -916,12 +918,12 @@ const CanvasManager = {
         this.ctx.filter = 'none';
 
         // 2. Inner viewing area (semi-transparent center)
-        const innerX = x + frameThickness;
-        const innerY = y + frameThickness;
-        const innerWidth = toploaderWidth - (frameThickness * 2);
-        const innerHeight = toploaderHeight - (frameThickness * 2);
+        const innerX = x + frameThicknessLeft;
+        const innerY = y + frameThicknessLeft;
+        const innerWidth = toploaderWidth - frameThicknessLeft - frameThicknessRight;
+        const innerHeight = toploaderHeight - frameThicknessLeft - frameThicknessBottom;
 
-        roundedRect(innerX, innerY, innerWidth, innerHeight, topCornerRadius - frameThickness, bottomCornerRadius - frameThickness);
+        roundedRect(innerX, innerY, innerWidth, innerHeight, topCornerRadius - frameThicknessLeft, bottomCornerRadius - frameThicknessLeft);
         this.ctx.fillStyle = 'rgba(240, 245, 255, 0.07)';
         this.ctx.fill();
 
@@ -931,7 +933,7 @@ const CanvasManager = {
         this.ctx.stroke();
 
         // Add frosted glass effect
-        roundedRect(innerX, innerY, innerWidth, innerHeight, topCornerRadius - frameThickness, bottomCornerRadius - frameThickness);
+        roundedRect(innerX, innerY, innerWidth, innerHeight, topCornerRadius - frameThicknessLeft, bottomCornerRadius - frameThicknessLeft);
         this.ctx.fillStyle = 'rgba(240, 245, 255, 0.005)';
         this.ctx.fill();
 
@@ -946,7 +948,7 @@ const CanvasManager = {
         topHighlightGradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.015)');
         topHighlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
-        roundedRect(innerX, innerY, innerWidth, innerHeight * 0.35, topCornerRadius - frameThickness, 0);
+        roundedRect(innerX, innerY, innerWidth, innerHeight * 0.35, topCornerRadius - frameThicknessLeft, 0);
         this.ctx.fillStyle = topHighlightGradient;
         this.ctx.fill();
 
