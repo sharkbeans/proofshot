@@ -831,8 +831,8 @@ const CanvasManager = {
         const y = -(height / 2) - overlap;
         const topCornerRadius = 56;
         const bottomCornerRadius = 33.6;
-        const frameThicknessLeft = 6.3; // left border thickness
-        const frameThicknessRight = 3.9; // right border thickness
+        const frameThicknessLeft = 10.08; // left border thickness
+        const frameThicknessRight = 6.24; // right border thickness
 
         this.ctx.save();
 
