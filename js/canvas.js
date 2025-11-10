@@ -821,8 +821,8 @@ const CanvasManager = {
      * Creates a realistic thick plastic sleeve with frame effect
      */
     drawToploader(width, height) {
-        // Increase toploader size to overlap the photocard more
-        const overlap = 41.2; // pixels of overlap on each side (increased by 3%)
+        // Toploader dimensions - overlaps photocard significantly
+        const overlap = 41.2; // pixels of overlap on each side
         const bottomOverlap = 85; // extra overlap at bottom
         const toploaderWidth = width + (overlap * 2);
         const toploaderHeight = height + overlap + bottomOverlap;
@@ -835,6 +835,11 @@ const CanvasManager = {
         const frameThicknessRight = 3.9; // right border thickness
 
         this.ctx.save();
+
+        // Clip top 5px to remove artifacts
+        this.ctx.beginPath();
+        this.ctx.rect(x, y + 5, toploaderWidth, toploaderHeight - 5);
+        this.ctx.clip();
 
         // Helper function to create rounded rectangle path
         const roundedRect = (x, y, w, h, radiusTop, radiusBottom) => {
@@ -851,49 +856,49 @@ const CanvasManager = {
             this.ctx.closePath();
         };
 
-        // 2. West (left) side - white border with reflection
+        // Left side white border with reflection gradient
+        const topCurveStart = topCornerRadius * 0.6; // 60% of the curve
         this.ctx.beginPath();
-        this.ctx.moveTo(x + topCornerRadius, y);
+        this.ctx.moveTo(x + topCurveStart, y);
         this.ctx.arcTo(x, y, x, y + topCornerRadius, topCornerRadius);
         this.ctx.lineTo(x, y + toploaderHeight - bottomCornerRadius);
         this.ctx.arcTo(x, y + toploaderHeight, x + bottomCornerRadius, y + toploaderHeight, bottomCornerRadius);
         this.ctx.lineTo(x + frameThicknessLeft + (bottomCornerRadius - frameThicknessLeft), y + toploaderHeight - frameThicknessLeft);
         this.ctx.arcTo(x + frameThicknessLeft, y + toploaderHeight - frameThicknessLeft, x + frameThicknessLeft, y + toploaderHeight - frameThicknessLeft - (bottomCornerRadius - frameThicknessLeft), bottomCornerRadius - frameThicknessLeft);
         this.ctx.lineTo(x + frameThicknessLeft, y + frameThicknessLeft + (topCornerRadius - frameThicknessLeft));
-        this.ctx.arcTo(x + frameThicknessLeft, y + frameThicknessLeft, x + frameThicknessLeft + (topCornerRadius - frameThicknessLeft), y + frameThicknessLeft, topCornerRadius - frameThicknessLeft);
-        this.ctx.lineTo(x + topCornerRadius, y);
+        this.ctx.arcTo(x + frameThicknessLeft, y + frameThicknessLeft, x + frameThicknessLeft + (topCornerRadius - frameThicknessLeft) * 0.6, y + frameThicknessLeft, topCornerRadius - frameThicknessLeft);
+        this.ctx.lineTo(x + topCurveStart, y);
         this.ctx.closePath();
 
-        const westGradient = this.ctx.createLinearGradient(x, y, x + topCornerRadius * 0.8, y);
-        westGradient.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
-        westGradient.addColorStop(0.6, 'rgba(245, 245, 250, 0.26)');
-        westGradient.addColorStop(1, 'rgba(235, 235, 245, 0)');
+        const westGradient = this.ctx.createLinearGradient(x, y, x + frameThicknessLeft * 3 * 1.35, y);
+        westGradient.addColorStop(0, 'rgba(255, 255, 255, 1.05)');
+        westGradient.addColorStop(1, 'rgba(245, 245, 250, 0.45)');
         this.ctx.fillStyle = westGradient;
         this.ctx.fill();
 
-        // 3. East (right) side - white border with reflection
+        // Right side white border with reflection gradient
+        const topCurveEnd = toploaderWidth - topCornerRadius * 0.6; // 60% of the curve
         this.ctx.beginPath();
-        this.ctx.moveTo(x + toploaderWidth - topCornerRadius, y);
+        this.ctx.moveTo(x + topCurveEnd, y);
         this.ctx.arcTo(x + toploaderWidth, y, x + toploaderWidth, y + topCornerRadius, topCornerRadius);
         this.ctx.lineTo(x + toploaderWidth, y + toploaderHeight - bottomCornerRadius);
         this.ctx.arcTo(x + toploaderWidth, y + toploaderHeight, x + toploaderWidth - bottomCornerRadius, y + toploaderHeight, bottomCornerRadius);
-        this.ctx.lineTo(x + toploaderWidth - frameThicknessRight - (bottomCornerRadius - frameThicknessRight), y + toploaderHeight - frameThicknessRight);
-        this.ctx.arcTo(x + toploaderWidth - frameThicknessRight, y + toploaderHeight - frameThicknessRight, x + toploaderWidth - frameThicknessRight, y + toploaderHeight - frameThicknessRight - (bottomCornerRadius - frameThicknessRight), bottomCornerRadius - frameThicknessRight);
-        this.ctx.lineTo(x + toploaderWidth - frameThicknessRight, y + frameThicknessRight + (topCornerRadius - frameThicknessRight));
-        this.ctx.arcTo(x + toploaderWidth - frameThicknessRight, y + frameThicknessRight, x + toploaderWidth - frameThicknessRight - (topCornerRadius - frameThicknessRight), y + frameThicknessRight, topCornerRadius - frameThicknessRight);
-        this.ctx.lineTo(x + toploaderWidth - topCornerRadius, y);
+        this.ctx.lineTo(x + toploaderWidth - frameThicknessRight * 1.35 - (bottomCornerRadius - frameThicknessRight * 1.35), y + toploaderHeight - frameThicknessRight * 1.35);
+        this.ctx.arcTo(x + toploaderWidth - frameThicknessRight * 1.35, y + toploaderHeight - frameThicknessRight * 1.35, x + toploaderWidth - frameThicknessRight * 1.35, y + toploaderHeight - frameThicknessRight * 1.35 - (bottomCornerRadius - frameThicknessRight * 1.35), bottomCornerRadius - frameThicknessRight * 1.35);
+        this.ctx.lineTo(x + toploaderWidth - frameThicknessRight * 1.35, y + frameThicknessRight * 1.35 + (topCornerRadius - frameThicknessRight * 1.35));
+        this.ctx.arcTo(x + toploaderWidth - frameThicknessRight * 1.35, y + frameThicknessRight * 1.35, x + toploaderWidth - frameThicknessRight * 1.35 - (topCornerRadius - frameThicknessRight * 1.35) * 0.6, y + frameThicknessRight * 1.35, topCornerRadius - frameThicknessRight * 1.35);
+        this.ctx.lineTo(x + topCurveEnd, y);
         this.ctx.closePath();
 
-        const eastGradient = this.ctx.createLinearGradient(x + toploaderWidth, y, x + toploaderWidth - topCornerRadius * 0.8, y);
-        eastGradient.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
-        eastGradient.addColorStop(0.6, 'rgba(245, 245, 250, 0.26)');
-        eastGradient.addColorStop(1, 'rgba(235, 235, 245, 0)');
+        const eastGradient = this.ctx.createLinearGradient(x + toploaderWidth, y, x + toploaderWidth - frameThicknessRight * 4.35 * 1.35, y);
+        eastGradient.addColorStop(0, 'rgba(255, 255, 255, 0.75)');
+        eastGradient.addColorStop(1, 'rgba(255, 255, 255, 0.75)');
         this.ctx.fillStyle = eastGradient;
         this.ctx.fill();
 
-        // 4. South (bottom) side - white border (shortened)
-        const southBorderStart = x + bottomCornerRadius * 1;
-        const southBorderEnd = x + toploaderWidth - bottomCornerRadius * 1;
+        // Bottom edge with subtle shadow gradient
+        const southBorderStart = x + bottomCornerRadius;
+        const southBorderEnd = x + toploaderWidth - bottomCornerRadius;
         const frameThicknessBottom = frameThicknessLeft;
 
         this.ctx.beginPath();
@@ -904,53 +909,67 @@ const CanvasManager = {
         this.ctx.closePath();
 
         const southGradient = this.ctx.createLinearGradient(southBorderStart, y + toploaderHeight, southBorderEnd, y + toploaderHeight);
-        southGradient.addColorStop(0, 'rgba(255, 255, 255, 0.325)');
-        southGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.65)');
-        southGradient.addColorStop(1, 'rgba(255, 255, 255, 0.325)');
+        southGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+        southGradient.addColorStop(0.5, 'rgba(255, 255, 255, 1.05)');
+        southGradient.addColorStop(1, 'rgba(255, 255, 255, 0.6)');
         this.ctx.fillStyle = southGradient;
         this.ctx.fill();
 
-        // Add blur effect to the area under toploader
-        this.ctx.filter = 'blur(1px)';
+        // Semi-transparent base overlay for plastic effect
         roundedRect(x, y, toploaderWidth, toploaderHeight, topCornerRadius, bottomCornerRadius);
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
         this.ctx.fill();
-        this.ctx.filter = 'none';
 
-        // 2. Inner viewing area (semi-transparent center)
+        // Inner viewing area with subtle plastic tint
         const innerX = x + frameThicknessLeft;
         const innerY = y + frameThicknessLeft;
         const innerWidth = toploaderWidth - frameThicknessLeft - frameThicknessRight;
         const innerHeight = toploaderHeight - frameThicknessLeft - frameThicknessBottom;
 
         roundedRect(innerX, innerY, innerWidth, innerHeight, topCornerRadius - frameThicknessLeft, bottomCornerRadius - frameThicknessLeft);
-        this.ctx.fillStyle = 'rgba(240, 245, 255, 0.07)';
+        this.ctx.fillStyle = 'rgba(240, 245, 255, 0.08)';
         this.ctx.fill();
 
-        // Inner shadow for depth
-        this.ctx.strokeStyle = 'rgba(180, 190, 210, 0.2)';
+        // Subtle inner edge definition
+        this.ctx.strokeStyle = 'rgba(180, 190, 210, 0.15)';
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
 
-        // Add frosted glass effect
-        roundedRect(innerX, innerY, innerWidth, innerHeight, topCornerRadius - frameThicknessLeft, bottomCornerRadius - frameThicknessLeft);
-        this.ctx.fillStyle = 'rgba(240, 245, 255, 0.005)';
-        this.ctx.fill();
-
-        // Inner shadow for depth (reduced opacity by half)
-        this.ctx.strokeStyle = 'rgba(180, 190, 210, 0.1)';
-        this.ctx.lineWidth = 1;
-        this.ctx.stroke();
-
-        // 3. Top glossy highlight on viewing area (reduced opacity by half)
-        const topHighlightGradient = this.ctx.createLinearGradient(innerX, innerY, innerX, innerY + innerHeight * 0.35);
-        topHighlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
-        topHighlightGradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.015)');
+        // Top glossy highlight (subtle reflection from light source)
+        const topHighlightGradient = this.ctx.createLinearGradient(innerX, innerY, innerX, innerY + innerHeight * 0.3);
+        topHighlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
+        topHighlightGradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.02)');
         topHighlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
-        roundedRect(innerX, innerY, innerWidth, innerHeight * 0.35, topCornerRadius - frameThicknessLeft, 0);
+        roundedRect(innerX, innerY, innerWidth, innerHeight * 0.3, topCornerRadius - frameThicknessLeft, 0);
         this.ctx.fillStyle = topHighlightGradient;
         this.ctx.fill();
+
+        // Inner shadow lines for 3D bezel effect
+
+        // Left inner shadow line (middle to bottom only)
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + frameThicknessLeft * 1.5, y + frameThicknessLeft + topCornerRadius * 1.8);
+        this.ctx.lineTo(x + frameThicknessLeft * 1.5, y + toploaderHeight - bottomCornerRadius - 2);
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+
+        // Right inner shadow line (middle to bottom only)
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + toploaderWidth - frameThicknessRight * 1.5, y + frameThicknessLeft + topCornerRadius * 1.8);
+        this.ctx.lineTo(x + toploaderWidth - frameThicknessRight * 1.5, y + toploaderHeight - bottomCornerRadius - 2);
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+
+        // Bottom inner shadow line
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + bottomCornerRadius + 2, y + toploaderHeight - frameThicknessBottom * 1.5);
+        this.ctx.lineTo(x + toploaderWidth - bottomCornerRadius - 2, y + toploaderHeight - frameThicknessBottom * 1.5);
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
 
         this.ctx.restore();
     },
