@@ -111,7 +111,7 @@ body {
 .canvas-container {
     position: relative;
     background: var(--bg-color);
-    border-radius: var(--radius-lg);
+    border-radius: 0;
     box-shadow: var(--shadow-lg);
     overflow: hidden;
     aspect-ratio: 3/4;
@@ -181,8 +181,6 @@ body {
 
 #proofshot-canvas {
     display: block;
-    width: 100%;
-    height: 100%;
     cursor: grab;
     transition: opacity 0.3s ease;
 }
