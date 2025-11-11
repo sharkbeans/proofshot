@@ -120,7 +120,6 @@ body {
     width: 100%;
     touch-action: none;
     user-select: none;
-    transition: var(--transition);
 }
 
 /* Aspect ratio classes for normal mode */

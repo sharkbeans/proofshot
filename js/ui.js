@@ -1078,10 +1078,34 @@ const UIManager = {
             // Exit fullscreen mode but keep aspect ratio
             const canvasContainer = document.querySelector('.canvas-container');
             if (canvasContainer) {
+                // Calculate current canvas size in camera mode before removing class
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                let capturedWidth, capturedHeight;
+
+                if (this.cameraAspectRatio === '3:4') {
+                    capturedWidth = Math.min(vh * 0.75, vw);
+                    capturedHeight = capturedWidth * (4/3);
+                } else if (this.cameraAspectRatio === '9:16') {
+                    capturedWidth = Math.min(vh * 0.5625, vw);
+                    capturedHeight = capturedWidth * (16/9);
+                } else if (this.cameraAspectRatio === '1:1') {
+                    capturedWidth = Math.min(vh, vw);
+                    capturedHeight = capturedWidth;
+                } else {
+                    capturedWidth = Math.min(vh * 0.75, vw);
+                    capturedHeight = capturedWidth * (4/3);
+                }
+
                 canvasContainer.classList.remove('camera-active');
 
                 // Keep the aspect ratio for the canvas
                 this.applyCanvasAspectRatio(canvasContainer);
+
+                // Set explicit container size to match camera mode size
+                canvasContainer.style.width = capturedWidth + 'px';
+                canvasContainer.style.height = capturedHeight + 'px';
+                canvasContainer.style.maxWidth = 'none';
 
                 // Reset canvas style
                 const canvas = document.getElementById('proofshot-canvas');
