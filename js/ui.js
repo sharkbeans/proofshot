@@ -838,66 +838,23 @@ const UIManager = {
             this.canvas.render();
         } else {
             // On desktop, restart camera or clear and prepare for new image
-            try {
-                // Clear the background image
-                this.canvas.backgroundImage = null;
+            // Clear the background image
+            this.canvas.backgroundImage = null;
 
-                // Check if we can start camera
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    // Show upload background and add photocard buttons
-                    if (this.elements.cameraUploadBgBtn) {
-                        this.elements.cameraUploadBgBtn.style.display = '';
-                    }
-                    if (this.elements.cameraAddPhotocardBtn) {
-                        this.elements.cameraAddPhotocardBtn.style.display = '';
-                    }
+            // Show upload background and add photocard buttons
+            if (this.elements.cameraUploadBgBtn) {
+                this.elements.cameraUploadBgBtn.style.display = '';
+            }
+            if (this.elements.cameraAddPhotocardBtn) {
+                this.elements.cameraAddPhotocardBtn.style.display = '';
+            }
 
-                    // Start camera
-                    this.showLoading('Starting camera...');
-                    await this.canvas.startCamera();
-
-                    // Show camera controls
-                    if (this.elements.cameraControls) {
-                        this.elements.cameraControls.classList.add('active');
-                    }
-
-                    // Show aspect ratio button
-                    if (this.elements.cameraAspectRatioBtn) {
-                        this.elements.cameraAspectRatioBtn.classList.add('active');
-                    }
-
-                    // Show reset photocard button
-                    if (this.elements.cameraResetPhotocardBtn) {
-                        this.elements.cameraResetPhotocardBtn.classList.add('active');
-                    }
-
-                    // Make canvas container fullscreen with aspect ratio
-                    const canvasContainer = document.querySelector('.canvas-container');
-                    if (canvasContainer) {
-                        canvasContainer.classList.add('camera-active');
-                        this.applyAspectRatio(canvasContainer);
-                        // Resize canvas to fit fullscreen and reset photocard
-                        setTimeout(() => {
-                            this.canvas.resizeCanvas();
-                            // Reset photocard position and scale to fit new camera canvas size
-                            this.canvas.resetPhotocard();
-                            this.syncPhotocardSliders();
-                        }, 100);
-                    }
-
-                    this.hideLoading();
-                } else {
-                    // Camera not available, just show canvas overlay
-                    this.canvas.render();
-                    this.showCanvasOverlay();
-                    this.showNotification('Ready for new proofshot', 'info');
-                }
-            } catch (error) {
-                console.error('Error starting new session:', error);
+            // Try to start camera, or fall back to canvas overlay
+            const cameraStarted = await this.initializeCamera();
+            if (!cameraStarted) {
                 this.canvas.render();
                 this.showCanvasOverlay();
                 this.showNotification('Ready for new proofshot', 'info');
-                this.hideLoading();
             }
         }
     },
@@ -971,27 +928,14 @@ const UIManager = {
     },
 
     /**
-     * Handle launch camera from mobile home
+     * Shared method to initialize camera with UI setup
      */
-    async handleLaunchCamera() {
-        // Hide mobile home
-        if (this.elements.mobileHome) {
-            this.elements.mobileHome.classList.remove('active');
-        }
-
-        // Start camera
-        await this.handleCameraStart();
-    },
-
-    /**
-     * Handle camera start
-     */
-    async handleCameraStart() {
+    async initializeCamera() {
         try {
             // Check if camera is supported
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 this.showNotification('Camera not supported on this device', 'error');
-                return;
+                return false;
             }
 
             this.showLoading('Starting camera...');
@@ -1034,7 +978,8 @@ const UIManager = {
                 this.elements.toolbar.classList.add('collapsed');
             }
 
-            // Don't show notification - keep UI clean
+            this.hideLoading();
+            return true;
         } catch (error) {
             console.error('Error starting camera:', error);
 
@@ -1046,9 +991,29 @@ const UIManager = {
             }
 
             this.showNotification(errorMessage, 'error');
-        } finally {
             this.hideLoading();
+            return false;
         }
+    },
+
+    /**
+     * Handle launch camera from mobile home
+     */
+    async handleLaunchCamera() {
+        // Hide mobile home
+        if (this.elements.mobileHome) {
+            this.elements.mobileHome.classList.remove('active');
+        }
+
+        // Start camera
+        await this.handleCameraStart();
+    },
+
+    /**
+     * Handle camera start
+     */
+    async handleCameraStart() {
+        await this.initializeCamera();
     },
 
     /**
@@ -1407,75 +1372,41 @@ const UIManager = {
      * Handle camera discard
      */
     async handleCameraDiscard() {
-        try {
-            // Hide action buttons
-            if (this.elements.cameraActionButtons) {
-                this.elements.cameraActionButtons.classList.remove('active');
+        // Hide action buttons
+        if (this.elements.cameraActionButtons) {
+            this.elements.cameraActionButtons.classList.remove('active');
+        }
+
+        // Clear the background image but keep the photocard
+        this.canvas.backgroundImage = null;
+
+        // On mobile, return to home screen
+        if (window.innerWidth <= 767) {
+            // Show mobile home screen
+            if (this.elements.mobileHome) {
+                this.elements.mobileHome.classList.add('active');
             }
 
-            // Clear the background image but keep the photocard
-            this.canvas.backgroundImage = null;
+            // Reset canvas
+            this.canvas.render();
+            this.showNotification('Discarded', 'info');
+        } else {
+            // On desktop, restart camera
+            // Show upload background and add photocard buttons again
+            if (this.elements.cameraUploadBgBtn) {
+                this.elements.cameraUploadBgBtn.style.display = '';
+            }
+            if (this.elements.cameraAddPhotocardBtn) {
+                this.elements.cameraAddPhotocardBtn.style.display = '';
+            }
 
-            // On mobile, return to home screen
-            if (window.innerWidth <= 767) {
-                // Show mobile home screen
-                if (this.elements.mobileHome) {
-                    this.elements.mobileHome.classList.add('active');
-                }
-
-                // Reset canvas
-                this.canvas.render();
-                this.showNotification('Discarded', 'info');
-            } else {
-                // On desktop, restart camera
-                // Show upload background and add photocard buttons again
-                if (this.elements.cameraUploadBgBtn) {
-                    this.elements.cameraUploadBgBtn.style.display = '';
-                }
-                if (this.elements.cameraAddPhotocardBtn) {
-                    this.elements.cameraAddPhotocardBtn.style.display = '';
-                }
-
-                // Restart camera
-                this.showLoading('Restarting camera...');
-                await this.canvas.startCamera();
-
-                // Show camera controls again
-                if (this.elements.cameraControls) {
-                    this.elements.cameraControls.classList.add('active');
-                }
-
-                // Show aspect ratio button
-                if (this.elements.cameraAspectRatioBtn) {
-                    this.elements.cameraAspectRatioBtn.classList.add('active');
-                }
-
-                // Show reset photocard button
-                if (this.elements.cameraResetPhotocardBtn) {
-                    this.elements.cameraResetPhotocardBtn.classList.add('active');
-                }
-
-                // Make canvas container fullscreen with aspect ratio
-                const canvasContainer = document.querySelector('.canvas-container');
-                if (canvasContainer) {
-                    canvasContainer.classList.add('camera-active');
-                    this.applyAspectRatio(canvasContainer);
-                    // Resize canvas to fit fullscreen and reset photocard
-                    setTimeout(() => {
-                        this.canvas.resizeCanvas();
-                        // Reset photocard position and scale to fit new camera canvas size
-                        this.canvas.resetPhotocard();
-                        this.syncPhotocardSliders();
-                    }, 100);
-                }
-
+            // Restart camera
+            const cameraStarted = await this.initializeCamera();
+            if (cameraStarted) {
                 this.showNotification('Ready to take another photo', 'info');
+            } else {
+                this.showNotification('Failed to discard', 'error');
             }
-        } catch (error) {
-            console.error('Error handling discard:', error);
-            this.showNotification('Failed to discard', 'error');
-        } finally {
-            this.hideLoading();
         }
     },
 
