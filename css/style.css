@@ -157,7 +157,7 @@ body {
     top: 0;
     left: 0;
     width: 100vw;
-    height: calc(100vh - 100px);
+    height: calc(100vh - 60px);
     max-width: none;
     max-height: none;
     aspect-ratio: unset;
@@ -174,24 +174,24 @@ body {
     width: auto !important;
     height: auto !important;
     max-width: 100vw;
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - 60px);
 }
 
 .canvas-container.camera-active.aspect-3-4 #proofshot-canvas {
     aspect-ratio: 3/4;
-    width: min(calc((100vh - 100px) * 0.75), 100vw) !important;
+    width: min(calc((100vh - 60px) * 0.75), 100vw) !important;
     height: auto !important;
 }
 
 .canvas-container.camera-active.aspect-9-16 #proofshot-canvas {
     aspect-ratio: 9/16;
-    width: min(calc((100vh - 100px) * 0.5625), 100vw) !important;
+    width: min(calc((100vh - 60px) * 0.5625), 100vw) !important;
     height: auto !important;
 }
 
 .canvas-container.camera-active.aspect-1-1 #proofshot-canvas {
     aspect-ratio: 1/1;
-    width: min(calc(100vh - 100px), 100vw) !important;
+    width: min(calc(100vh - 60px), 100vw) !important;
     height: auto !important;
 }
 
@@ -841,7 +841,7 @@ input[type="range"]::-moz-range-track {
 
 .camera-controls {
     position: fixed;
-    bottom: 100px;
+    bottom: 60px;
     left: 50%;
     transform: translateX(-50%);
     display: none;
@@ -1112,11 +1112,14 @@ input[type="range"]::-moz-range-track {
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.8) 100%);
-    padding: var(--spacing-xs) var(--spacing-sm) var(--spacing-sm) var(--spacing-sm);
+    width: 100%;
+    height: 60px;
+    background: #000;
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: 0;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
     z-index: 1002;
+    align-items: center;
 }
 
 .camera-action-buttons.active {
