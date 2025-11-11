@@ -158,6 +158,15 @@ const ToploaderConfig = {
     curves: {
         // Top curve starts at this percentage of corner radius
         topCurveStartPercent: 0.6
+    },
+
+    // White glaze film covering the photocard
+    glazeFilm: {
+        // White color with mild opacity (3%)
+        red: 255,
+        green: 255,
+        blue: 255,
+        opacity: 0.03
     }
 };
 
