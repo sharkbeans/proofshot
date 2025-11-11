@@ -134,6 +134,12 @@ const CanvasManager = {
             const rect = container.getBoundingClientRect();
             canvasWidth = rect.width;
             canvasHeight = rect.height;
+
+            // Fallback to default size if container has no dimensions yet
+            if (canvasWidth < 100 || canvasHeight < 100) {
+                canvasWidth = 600;
+                canvasHeight = 800;
+            }
         }
 
         // Set canvas size with device pixel ratio for crisp rendering
@@ -154,6 +160,12 @@ const CanvasManager = {
         if (!isCameraActive) {
             this.canvas.style.width = canvasWidth + 'px';
             this.canvas.style.height = canvasHeight + 'px';
+
+            // Also set container dimensions if they weren't set
+            if (container.getBoundingClientRect().width < 100) {
+                container.style.width = canvasWidth + 'px';
+                container.style.height = canvasHeight + 'px';
+            }
         }
 
         this.render();
