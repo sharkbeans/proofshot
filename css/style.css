@@ -971,42 +971,34 @@ input[type="range"]::-moz-range-track {
 
 /* Camera Action Buttons */
 .camera-action-buttons {
-    position: fixed;
-    bottom: var(--spacing-lg);
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     display: none;
     gap: var(--spacing-md);
-    z-index: 1002;
-    background: rgba(0, 0, 0, 0.9);
+    justify-content: center;
+    margin-top: var(--spacing-md);
+    background: var(--bg-color);
     padding: var(--spacing-md);
-    border-radius: var(--radius-lg);
-    backdrop-filter: blur(10px);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
 }
 
 .camera-action-buttons.active {
     display: flex;
 }
 
-/* Mobile view: position below canvas */
+/* Mobile view: full width */
 @media (max-width: 767px) {
     .camera-action-buttons {
-        position: relative;
-        left: 0;
-        transform: none;
         width: 100%;
-        justify-content: center;
-        margin-top: var(--spacing-md);
-        background: var(--bg-color);
-        border-radius: var(--radius-md);
-        box-shadow: var(--shadow);
     }
 }
 
-/* Desktop view: keep fixed positioning for camera mode */
+/* Desktop view: centered with max-width */
 @media (min-width: 768px) {
     .camera-action-buttons {
         max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
     }
 }
 
