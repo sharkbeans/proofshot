@@ -1116,6 +1116,13 @@ const UIManager = {
                 // Resize canvas to new aspect ratio
                 setTimeout(() => {
                     this.canvas.resizeCanvas();
+
+                    // Ensure canvas style dimensions match container exactly for crisp rendering
+                    const canvas = document.getElementById('proofshot-canvas');
+                    if (canvas) {
+                        canvas.style.width = capturedWidth + 'px';
+                        canvas.style.height = capturedHeight + 'px';
+                    }
                 }, 100);
             }
 
