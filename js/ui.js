@@ -1088,6 +1088,7 @@ const UIManager = {
                 // Calculate current canvas size in camera mode before removing class
                 const vw = window.innerWidth;
                 const vh = window.innerHeight;
+                const isMobile = vw <= 767;
                 let capturedWidth, capturedHeight;
 
                 if (this.cameraAspectRatio === '3:4') {
@@ -1102,6 +1103,16 @@ const UIManager = {
                 } else {
                     capturedWidth = Math.min(vh * 0.75, vw);
                     capturedHeight = capturedWidth * (4/3);
+                }
+
+                // On mobile, scale down canvas to fit with buttons visible
+                if (isMobile) {
+                    const availableHeight = vh - 180; // Reserve space for header and buttons
+                    if (capturedHeight > availableHeight) {
+                        const scaleFactor = availableHeight / capturedHeight;
+                        capturedWidth = capturedWidth * scaleFactor;
+                        capturedHeight = availableHeight;
+                    }
                 }
 
                 canvasContainer.classList.remove('camera-active');
@@ -1133,36 +1144,31 @@ const UIManager = {
                         canvas.style.height = capturedHeight + 'px';
                     }
 
-                    // Force scroll to ensure the entire canvas is visible in the preview
+                    // Force scroll to ensure the entire canvas and buttons are visible
                     setTimeout(() => {
-                        // Scroll to top of page first to reset viewport
-                        window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                        });
-
-                        // Then scroll to make canvas fully visible
-                        setTimeout(() => {
-                            canvasContainer.scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'center',
-                                inline: 'nearest'
+                        if (isMobile) {
+                            // On mobile, scroll to show canvas at top with buttons below
+                            window.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
                             });
-                        }, 300);
+                        } else {
+                            // On desktop, center the canvas in viewport
+                            setTimeout(() => {
+                                canvasContainer.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center',
+                                    inline: 'nearest'
+                                });
+                            }, 100);
+                        }
                     }, 150);
                 }, 100);
             }
 
-            // Show action buttons after capture
+            // Show action buttons after capture (sticky on mobile)
             if (this.elements.cameraActionButtons) {
                 this.elements.cameraActionButtons.classList.add('active');
-                
-                // Auto-scroll to action buttons on mobile
-                if (window.innerWidth <= 767) {
-                    setTimeout(() => {
-                        this.elements.cameraActionButtons.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }, 150);
-                }
             }
 
             // Show success notification with flash effect
