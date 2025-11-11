@@ -871,8 +871,8 @@ const CanvasManager = {
         this.ctx.closePath();
 
         const westGradient = this.ctx.createLinearGradient(x, y, x + frameThicknessLeft * 3 * 1.35, y);
-        westGradient.addColorStop(0, 'rgba(255, 255, 255, 1.05)');
-        westGradient.addColorStop(1, 'rgba(245, 245, 250, 0.45)');
+        westGradient.addColorStop(0, 'rgba(255, 255, 255, 0.85)'); // 85% opacity
+        westGradient.addColorStop(1, 'rgba(255, 255, 255, 0.425)'); // 85% of 0.5 = 0.425
         this.ctx.fillStyle = westGradient;
         this.ctx.fill();
 
@@ -891,8 +891,8 @@ const CanvasManager = {
         this.ctx.closePath();
 
         const eastGradient = this.ctx.createLinearGradient(x + toploaderWidth, y, x + toploaderWidth - frameThicknessRight * 4.35 * 1.35, y);
-        eastGradient.addColorStop(0, 'rgba(255, 255, 255, 0.75)');
-        eastGradient.addColorStop(1, 'rgba(255, 255, 255, 0.75)');
+        eastGradient.addColorStop(0, 'rgba(255, 255, 255, 0.85)'); // 85% opacity
+        eastGradient.addColorStop(1, 'rgba(255, 255, 255, 0.85)'); // 85% opacity
         this.ctx.fillStyle = eastGradient;
         this.ctx.fill();
 
@@ -909,9 +909,9 @@ const CanvasManager = {
         this.ctx.closePath();
 
         const southGradient = this.ctx.createLinearGradient(southBorderStart, y + toploaderHeight, southBorderEnd, y + toploaderHeight);
-        southGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
-        southGradient.addColorStop(0.5, 'rgba(255, 255, 255, 1.05)');
-        southGradient.addColorStop(1, 'rgba(255, 255, 255, 0.6)');
+        southGradient.addColorStop(0, 'rgba(255, 255, 255, 0.595)'); // 85% of 0.7 = 0.595
+        southGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.8075)'); // 85% of 0.95 = 0.8075
+        southGradient.addColorStop(1, 'rgba(255, 255, 255, 0.595)'); // 85% of 0.7 = 0.595
         this.ctx.fillStyle = southGradient;
         this.ctx.fill();
 
@@ -1062,6 +1062,84 @@ const CanvasManager = {
             0, 0, shadowBottomCornerRadius, shadowBottomCornerRadius
         );
         this.ctx.fill();
+
+        // Third internal shading line - follows white border width for West, East, and South
+        // This creates a connected border-following highlight with varying widths per side
+        this.ctx.strokeStyle = 'rgba(128, 128, 128, 0.7)'; // Grey with 70% opacity
+
+        // Define position variables
+        const thirdLineLeftX = x + frameThicknessLeft;
+        const thirdLineRightX = x + toploaderWidth - frameThicknessRight * 1.35;
+        const thirdLineTopY = y + frameThicknessLeft;
+        const thirdLineBottomY = y + toploaderHeight - frameThicknessBottom;
+
+        // Left edge (West) - with left border width reduced by 50%
+        this.ctx.lineWidth = frameThicknessLeft * 0.5;
+        this.ctx.beginPath();
+        this.ctx.moveTo(thirdLineLeftX, thirdLineTopY + shadowTopCornerRadius);
+        this.ctx.lineTo(thirdLineLeftX, thirdLineBottomY - shadowBottomCornerRadius);
+        this.ctx.stroke();
+
+        // Bottom edge (South) - with bottom border width reduced by 50%
+        this.ctx.lineWidth = frameThicknessBottom * 0.5;
+        this.ctx.beginPath();
+        this.ctx.moveTo(thirdLineLeftX + shadowBottomCornerRadius, thirdLineBottomY);
+        this.ctx.lineTo(thirdLineRightX - shadowBottomCornerRadius, thirdLineBottomY);
+        this.ctx.stroke();
+
+        // Right edge (East) - with right border width reduced by 50%
+        this.ctx.lineWidth = frameThicknessRight * 1.35 * 0.5;
+        this.ctx.beginPath();
+        this.ctx.moveTo(thirdLineRightX, thirdLineTopY + shadowTopCornerRadius);
+        this.ctx.lineTo(thirdLineRightX, thirdLineBottomY - shadowBottomCornerRadius);
+        this.ctx.stroke();
+
+        // Corner arcs - reduced by 50%
+        this.ctx.lineWidth = frameThicknessLeft * 0.5; // Use left thickness for corners
+
+        // Bottom-left corner
+        this.ctx.beginPath();
+        this.ctx.arc(
+            thirdLineLeftX + shadowBottomCornerRadius,
+            thirdLineBottomY - shadowBottomCornerRadius,
+            shadowBottomCornerRadius,
+            Math.PI / 2,
+            Math.PI
+        );
+        this.ctx.stroke();
+
+        // Bottom-right corner
+        this.ctx.beginPath();
+        this.ctx.arc(
+            thirdLineRightX - shadowBottomCornerRadius,
+            thirdLineBottomY - shadowBottomCornerRadius,
+            shadowBottomCornerRadius,
+            0,
+            Math.PI / 2
+        );
+        this.ctx.stroke();
+
+        // Top-left corner
+        this.ctx.beginPath();
+        this.ctx.arc(
+            thirdLineLeftX + shadowTopCornerRadius,
+            thirdLineTopY + shadowTopCornerRadius,
+            shadowTopCornerRadius,
+            Math.PI,
+            Math.PI * 1.5
+        );
+        this.ctx.stroke();
+
+        // Top-right corner
+        this.ctx.beginPath();
+        this.ctx.arc(
+            thirdLineRightX - shadowTopCornerRadius,
+            thirdLineTopY + shadowTopCornerRadius,
+            shadowTopCornerRadius,
+            Math.PI * 1.5,
+            0
+        );
+        this.ctx.stroke();
 
         this.ctx.restore();
     },
