@@ -1113,13 +1113,6 @@ const UIManager = {
                 canvasContainer.style.height = capturedHeight + 'px';
                 canvasContainer.style.maxWidth = 'none';
 
-                // Reset canvas style
-                const canvas = document.getElementById('proofshot-canvas');
-                if (canvas) {
-                    canvas.style.width = '';
-                    canvas.style.height = '';
-                }
-
                 // Resize canvas to new aspect ratio
                 setTimeout(() => {
                     this.canvas.resizeCanvas();

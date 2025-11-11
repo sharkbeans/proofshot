@@ -143,6 +143,13 @@ const CanvasManager = {
             this.canvas.style.height = canvasHeight + 'px';
         }
 
+        // Reposition photocard if it exists (maintain center position after resize)
+        if (this.photocardImage && this.isPlaceholder) {
+            this.photocard.x = canvasWidth / 2;
+            this.photocard.y = canvasHeight / 2;
+            this.photocard.scale = Math.min(canvasWidth, canvasHeight) / (this.photocardImage.width * 1.5);
+        }
+
         this.render();
     },
 
@@ -549,6 +556,12 @@ const CanvasManager = {
             if (!this.photocardImage || this.isPlaceholder) {
                 this.loadPlaceholderPhotocard();
             }
+
+            // Force a render after canvas resize to ensure crisp display
+            // Use requestAnimationFrame to ensure it happens after any pending resizes
+            requestAnimationFrame(() => {
+                this.render();
+            });
         };
         img.src = captureCanvas.toDataURL('image/png');
     },
