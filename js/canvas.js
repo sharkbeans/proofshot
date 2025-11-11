@@ -822,8 +822,8 @@ const CanvasManager = {
      */
     drawToploader(width, height) {
         // Toploader dimensions - overlaps photocard significantly
-        const overlap = 41.2; // pixels of overlap on each side
-        const bottomOverlap = 85; // extra overlap at bottom
+        const overlap = 61.8; // pixels of overlap on each side (increased by 50%)
+        const bottomOverlap = 89.25; // extra overlap at bottom (127.5 decreased by 30%)
         const toploaderWidth = width + (overlap * 2);
         const toploaderHeight = height + overlap + bottomOverlap;
 
