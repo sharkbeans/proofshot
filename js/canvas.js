@@ -945,31 +945,99 @@ const CanvasManager = {
         this.ctx.fillStyle = topHighlightGradient;
         this.ctx.fill();
 
-        // Inner shadow lines for 3D bezel effect
+        // Inner shadow gradients for 3D depth effect - connecting at corners
 
-        // Left inner shadow line (middle to bottom only)
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + frameThicknessLeft * 1.5, y + frameThicknessLeft + topCornerRadius * 1.8);
-        this.ctx.lineTo(x + frameThicknessLeft * 1.5, y + toploaderHeight - bottomCornerRadius - 2);
-        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
-        this.ctx.lineWidth = 1;
-        this.ctx.stroke();
+        const leftShadowWidth = frameThicknessLeft * 1.2;
+        const rightShadowWidth = frameThicknessLeft * 1.2;
+        const bottomShadowHeight = frameThicknessBottom * 1.2;
+        const rightInset = 2;
 
-        // Right inner shadow line (middle to bottom only)
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + toploaderWidth - frameThicknessRight * 1.5, y + frameThicknessLeft + topCornerRadius * 1.8);
-        this.ctx.lineTo(x + toploaderWidth - frameThicknessRight * 1.5, y + toploaderHeight - bottomCornerRadius - 2);
-        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
-        this.ctx.lineWidth = 1;
-        this.ctx.stroke();
+        // Shadow corner radius to match border curvature - matches inner edge of white border
+        const shadowTopCornerRadius = topCornerRadius - frameThicknessLeft;
+        const shadowBottomCornerRadius = bottomCornerRadius - frameThicknessLeft;
 
-        // Bottom inner shadow line
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + bottomCornerRadius + 2, y + toploaderHeight - frameThicknessBottom * 1.5);
-        this.ctx.lineTo(x + toploaderWidth - bottomCornerRadius - 2, y + toploaderHeight - frameThicknessBottom * 1.5);
-        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
-        this.ctx.lineWidth = 1;
-        this.ctx.stroke();
+        // Helper to create rounded rectangle path
+        const createRoundedShadowPath = (shadowX, shadowY, shadowW, shadowH, radiusTopLeft, radiusTopRight, radiusBottomLeft, radiusBottomRight) => {
+            this.ctx.beginPath();
+            this.ctx.moveTo(shadowX + radiusTopLeft, shadowY);
+            this.ctx.lineTo(shadowX + shadowW - radiusTopRight, shadowY);
+            if (radiusTopRight > 0) {
+                this.ctx.arcTo(shadowX + shadowW, shadowY, shadowX + shadowW, shadowY + radiusTopRight, radiusTopRight);
+            }
+            this.ctx.lineTo(shadowX + shadowW, shadowY + shadowH - radiusBottomRight);
+            if (radiusBottomRight > 0) {
+                this.ctx.arcTo(shadowX + shadowW, shadowY + shadowH, shadowX + shadowW - radiusBottomRight, shadowY + shadowH, radiusBottomRight);
+            }
+            this.ctx.lineTo(shadowX + radiusBottomLeft, shadowY + shadowH);
+            if (radiusBottomLeft > 0) {
+                this.ctx.arcTo(shadowX, shadowY + shadowH, shadowX, shadowY + shadowH - radiusBottomLeft, radiusBottomLeft);
+            }
+            this.ctx.lineTo(shadowX, shadowY + radiusTopLeft);
+            if (radiusTopLeft > 0) {
+                this.ctx.arcTo(shadowX, shadowY, shadowX + radiusTopLeft, shadowY, radiusTopLeft);
+            }
+            this.ctx.closePath();
+        };
+
+        // Left inner shadow gradient (West) - full height including corners
+        const leftShadowGradient = this.ctx.createLinearGradient(
+            x + frameThicknessLeft,
+            y,
+            x + frameThicknessLeft + leftShadowWidth,
+            y
+        );
+        leftShadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.25)');
+        leftShadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        this.ctx.fillStyle = leftShadowGradient;
+        createRoundedShadowPath(
+            x + frameThicknessLeft,
+            y + frameThicknessLeft,
+            leftShadowWidth,
+            toploaderHeight - frameThicknessLeft - frameThicknessBottom,
+            shadowTopCornerRadius, 0, shadowBottomCornerRadius, 0
+        );
+        this.ctx.fill();
+
+        // Right inner shadow gradient (East) - full height including corners
+        const rightShadowGradient = this.ctx.createLinearGradient(
+            x + toploaderWidth - frameThicknessRight - rightInset,
+            y,
+            x + toploaderWidth - frameThicknessRight - rightShadowWidth - rightInset,
+            y
+        );
+        rightShadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.25)');
+        rightShadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        this.ctx.fillStyle = rightShadowGradient;
+        createRoundedShadowPath(
+            x + toploaderWidth - frameThicknessRight - rightShadowWidth - rightInset,
+            y + frameThicknessLeft,
+            rightShadowWidth,
+            toploaderHeight - frameThicknessLeft - frameThicknessBottom,
+            0, shadowTopCornerRadius, 0, shadowBottomCornerRadius
+        );
+        this.ctx.fill();
+
+        // Bottom inner shadow gradient (South) - full width including corners
+        const bottomShadowGradient = this.ctx.createLinearGradient(
+            x,
+            y + toploaderHeight - frameThicknessBottom - bottomShadowHeight,
+            x,
+            y + toploaderHeight - frameThicknessBottom
+        );
+        bottomShadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        bottomShadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
+
+        this.ctx.fillStyle = bottomShadowGradient;
+        createRoundedShadowPath(
+            x + frameThicknessLeft,
+            y + toploaderHeight - frameThicknessBottom - bottomShadowHeight,
+            toploaderWidth - frameThicknessLeft - frameThicknessRight,
+            bottomShadowHeight,
+            0, 0, shadowBottomCornerRadius, shadowBottomCornerRadius
+        );
+        this.ctx.fill();
 
         this.ctx.restore();
     },
