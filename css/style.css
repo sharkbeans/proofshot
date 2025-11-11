@@ -114,25 +114,22 @@ body {
     border-radius: 0;
     box-shadow: var(--shadow-lg);
     overflow: hidden;
-    aspect-ratio: 3/4;
-    max-width: 600px;
     margin: 0 auto;
-    width: 100%;
     touch-action: none;
     user-select: none;
 }
 
-/* Aspect ratio classes for normal mode */
+/* Aspect ratio classes for normal mode - dimensions set by JavaScript */
 .canvas-container.aspect-9-16:not(.camera-active) {
-    aspect-ratio: 9/16;
+    /* Aspect ratio maintained by explicit width/height in JavaScript */
 }
 
 .canvas-container.aspect-1-1:not(.camera-active) {
-    aspect-ratio: 1/1;
+    /* Aspect ratio maintained by explicit width/height in JavaScript */
 }
 
 .canvas-container.aspect-3-4:not(.camera-active) {
-    aspect-ratio: 3/4;
+    /* Aspect ratio maintained by explicit width/height in JavaScript */
 }
 
 .canvas-container.camera-active {
@@ -636,7 +633,7 @@ input[type="range"]::-moz-range-track {
     }
 
     .canvas-container {
-        flex: 1;
+        flex: 0 0 auto;
         max-width: none;
     }
 
