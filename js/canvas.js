@@ -40,6 +40,15 @@ const CanvasManager = {
         showToploader: true // toploader visibility
     },
 
+    // Toploader gradient cache (to avoid recreating on every frame)
+    toploaderGradientCache: {
+        westGradient: null,
+        eastGradient: null,
+        southGradient: null,
+        cachedWidth: null,
+        cachedHeight: null
+    },
+
     // Touch/gesture state
     gesture: {
         active: false,
@@ -867,6 +876,10 @@ const CanvasManager = {
         const toploaderWidth = width + (overlap * 2);
         const toploaderHeight = height + overlap + bottomOverlap;
 
+        // Check if dimensions changed - if not, we can reuse cached gradients
+        const dimensionsChanged = this.toploaderGradientCache.cachedWidth !== width ||
+                                  this.toploaderGradientCache.cachedHeight !== height;
+
         const x = -(toploaderWidth / 2);
         const y = -(height / 2) - overlap;
         const topCornerRadius = cfg.corners.topRadius;
@@ -910,9 +923,16 @@ const CanvasManager = {
         this.ctx.lineTo(x + topCurveStart, y);
         this.ctx.closePath();
 
-        const westGradient = this.ctx.createLinearGradient(x, y, x + frameThicknessLeft * cfg.borders.west.widthMultiplier * cfg.borders.west.scaleFactor, y);
-        westGradient.addColorStop(0, `rgba(255, 255, 255, ${cfg.borders.west.startOpacity})`);
-        westGradient.addColorStop(1, `rgba(255, 255, 255, ${cfg.borders.west.endOpacity})`);
+        // Create or reuse cached west gradient
+        let westGradient;
+        if (dimensionsChanged) {
+            westGradient = this.ctx.createLinearGradient(x, y, x + frameThicknessLeft * cfg.borders.west.widthMultiplier * cfg.borders.west.scaleFactor, y);
+            westGradient.addColorStop(0, `rgba(255, 255, 255, ${cfg.borders.west.startOpacity})`);
+            westGradient.addColorStop(1, `rgba(255, 255, 255, ${cfg.borders.west.endOpacity})`);
+            this.toploaderGradientCache.westGradient = westGradient;
+        } else {
+            westGradient = this.toploaderGradientCache.westGradient;
+        }
         this.ctx.fillStyle = westGradient;
         this.ctx.fill();
 
@@ -930,9 +950,16 @@ const CanvasManager = {
         this.ctx.lineTo(x + topCurveEnd, y);
         this.ctx.closePath();
 
-        const eastGradient = this.ctx.createLinearGradient(x + toploaderWidth, y, x + toploaderWidth - frameThicknessRight * cfg.borders.east.widthMultiplier * cfg.borders.east.scaleFactor, y);
-        eastGradient.addColorStop(0, `rgba(255, 255, 255, ${cfg.borders.east.startOpacity})`);
-        eastGradient.addColorStop(1, `rgba(255, 255, 255, ${cfg.borders.east.endOpacity})`);
+        // Create or reuse cached east gradient
+        let eastGradient;
+        if (dimensionsChanged) {
+            eastGradient = this.ctx.createLinearGradient(x + toploaderWidth, y, x + toploaderWidth - frameThicknessRight * cfg.borders.east.widthMultiplier * cfg.borders.east.scaleFactor, y);
+            eastGradient.addColorStop(0, `rgba(255, 255, 255, ${cfg.borders.east.startOpacity})`);
+            eastGradient.addColorStop(1, `rgba(255, 255, 255, ${cfg.borders.east.endOpacity})`);
+            this.toploaderGradientCache.eastGradient = eastGradient;
+        } else {
+            eastGradient = this.toploaderGradientCache.eastGradient;
+        }
         this.ctx.fillStyle = eastGradient;
         this.ctx.fill();
 
@@ -948,10 +975,17 @@ const CanvasManager = {
         this.ctx.lineTo(southBorderStart, y + toploaderHeight - frameThicknessBottom);
         this.ctx.closePath();
 
-        const southGradient = this.ctx.createLinearGradient(southBorderStart, y + toploaderHeight, southBorderEnd, y + toploaderHeight);
-        southGradient.addColorStop(0, `rgba(255, 255, 255, ${cfg.borders.south.edgeOpacity})`);
-        southGradient.addColorStop(0.5, `rgba(255, 255, 255, ${cfg.borders.south.centerOpacity})`);
-        southGradient.addColorStop(1, `rgba(255, 255, 255, ${cfg.borders.south.edgeOpacity})`);
+        // Create or reuse cached south gradient
+        let southGradient;
+        if (dimensionsChanged) {
+            southGradient = this.ctx.createLinearGradient(southBorderStart, y + toploaderHeight, southBorderEnd, y + toploaderHeight);
+            southGradient.addColorStop(0, `rgba(255, 255, 255, ${cfg.borders.south.edgeOpacity})`);
+            southGradient.addColorStop(0.5, `rgba(255, 255, 255, ${cfg.borders.south.centerOpacity})`);
+            southGradient.addColorStop(1, `rgba(255, 255, 255, ${cfg.borders.south.edgeOpacity})`);
+            this.toploaderGradientCache.southGradient = southGradient;
+        } else {
+            southGradient = this.toploaderGradientCache.southGradient;
+        }
         this.ctx.fillStyle = southGradient;
         this.ctx.fill();
 
@@ -1182,6 +1216,10 @@ const CanvasManager = {
         this.ctx.stroke();
 
         this.ctx.restore();
+
+        // Update cache with current dimensions
+        this.toploaderGradientCache.cachedWidth = width;
+        this.toploaderGradientCache.cachedHeight = height;
     },
 
     /**
