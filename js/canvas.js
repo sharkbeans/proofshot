@@ -144,7 +144,8 @@ const CanvasManager = {
         }
 
         // Reposition photocard if it exists (maintain center position after resize)
-        if (this.photocardImage && this.isPlaceholder) {
+        if (this.photocardImage) {
+            // Recalculate scale and center position to ensure crisp rendering
             this.photocard.x = canvasWidth / 2;
             this.photocard.y = canvasHeight / 2;
             this.photocard.scale = Math.min(canvasWidth, canvasHeight) / (this.photocardImage.width * 1.5);
