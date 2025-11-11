@@ -860,43 +860,64 @@ input[type="range"]::-moz-range-track {
     pointer-events: auto;
 }
 
+/* Camera Controls Top Row */
+.camera-controls-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: var(--spacing-md);
+}
+
 /* Shutter Button - iOS Camera Style */
 .camera-shutter-btn {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
-    margin-bottom: var(--spacing-md);
-    transition: transform 0.1s ease;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
 }
 
 .camera-shutter-btn:active {
-    transform: scale(0.9);
+    transform: scale(0.88);
+}
+
+.camera-shutter-btn:hover {
+    filter: brightness(1.1);
 }
 
 .shutter-ring {
     width: 100%;
     height: 100%;
-    border: 11px solid rgba(255, 255, 255, 0.9);
+    border: 3px solid rgba(255, 255, 255, 0.95);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15), transparent 50%);
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.2),
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    position: relative;
 }
 
 .shutter-inner {
-    width: 64px;
-    height: 64px;
-    background: white;
+    width: 54px;
+    height: 54px;
+    background: radial-gradient(circle at 35% 35%, #ffffff, #f5f5f5);
     border-radius: 50%;
-    transition: transform 0.1s ease;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 .camera-shutter-btn:active .shutter-inner {
-    transform: scale(0.85);
+    transform: scale(0.92);
+    box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.2),
+                inset 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
 /* Camera Upload Background and Add Photocard Buttons */
@@ -941,16 +962,13 @@ input[type="range"]::-moz-range-track {
 
 /* Camera Aspect Ratio Button */
 .camera-aspect-ratio-btn {
-    position: fixed;
-    top: var(--spacing-xl);
-    right: var(--spacing-xl);
     padding: var(--spacing-xs) var(--spacing-sm);
-    background: black;
+    background: rgba(100, 100, 100, 0.7);
     border: none;
     border-radius: var(--radius-sm);
     color: white;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     cursor: pointer;
     display: none;
     align-items: center;
@@ -958,6 +976,8 @@ input[type="range"]::-moz-range-track {
     transition: var(--transition);
     z-index: 1002;
     min-width: 50px;
+    backdrop-filter: blur(5px);
+    height: 44px;
 }
 
 .camera-aspect-ratio-btn.active {
@@ -965,23 +985,19 @@ input[type="range"]::-moz-range-track {
 }
 
 .camera-aspect-ratio-btn:active {
-    background: var(--primary-dark);
-    border-color: var(--primary-dark);
-    transform: scale(0.95);
+    background: rgba(80, 80, 80, 0.9);
+    transform: scale(0.92);
 }
 
 /* Camera Reset Photocard Button */
 .camera-reset-photocard-btn {
-    position: fixed;
-    top: var(--spacing-xl);
-    left: var(--spacing-xl);
     padding: var(--spacing-xs) var(--spacing-sm);
-    background: black;
+    background: rgba(100, 100, 100, 0.7);
     border: none;
     border-radius: var(--radius-sm);
     color: white;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     cursor: pointer;
     display: none;
     align-items: center;
@@ -990,6 +1006,8 @@ input[type="range"]::-moz-range-track {
     transition: var(--transition);
     z-index: 1002;
     min-width: 50px;
+    backdrop-filter: blur(5px);
+    height: 44px;
 }
 
 .camera-reset-photocard-btn.active {
@@ -997,14 +1015,92 @@ input[type="range"]::-moz-range-track {
 }
 
 .camera-reset-photocard-btn:active {
-    background: var(--primary-dark);
-    border-color: var(--primary-dark);
-    transform: scale(0.95);
+    background: rgba(80, 80, 80, 0.9);
+    transform: scale(0.92);
 }
 
 .camera-reset-photocard-btn svg {
     width: 16px;
     height: 16px;
+}
+
+/* Camera Zoom Controls */
+.camera-zoom-controls {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    pointer-events: auto;
+}
+
+.camera-zoom-controls.active {
+    display: flex;
+}
+
+.camera-zoom-btn {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease;
+    padding: 0;
+}
+
+.camera-zoom-btn:active {
+    transform: scale(0.85);
+}
+
+.camera-zoom-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.camera-zoom-slider {
+    width: 100px;
+    height: 5px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.camera-zoom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.camera-zoom-slider::-webkit-slider-thumb:active {
+    transform: scale(1.2);
+}
+
+.camera-zoom-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.camera-zoom-slider::-moz-range-thumb:active {
+    transform: scale(1.2);
 }
 
 /* Camera Action Buttons */

@@ -48,21 +48,33 @@
                 </div>
                 <!-- Camera Controls Overlay -->
                 <div class="camera-controls" id="camera-controls">
-                    <button class="camera-shutter-btn" id="camera-shutter-btn">
-                        <div class="shutter-ring">
-                            <div class="shutter-inner"></div>
-                        </div>
-                    </button>
+                    <div class="camera-controls-top-row">
+                        <button class="camera-reset-photocard-btn" id="camera-reset-photocard-btn">
+                            <i data-lucide="refresh-cw"></i>
+                            <span>Reset</span>
+                        </button>
+                        <button class="camera-shutter-btn" id="camera-shutter-btn">
+                            <div class="shutter-ring">
+                                <div class="shutter-inner"></div>
+                            </div>
+                        </button>
+                        <button class="camera-aspect-ratio-btn" id="camera-aspect-ratio-btn">3:4</button>
+                    </div>
+                    <!-- Camera Zoom Controls -->
+                    <div class="camera-zoom-controls" id="camera-zoom-controls">
+                        <button class="camera-zoom-btn" id="camera-zoom-out-btn" title="Zoom Out">
+                            <i data-lucide="zoom-out"></i>
+                        </button>
+                        <input type="range" class="camera-zoom-slider" id="camera-zoom-slider" min="1" max="10" value="1" step="0.1" title="Camera Zoom">
+                        <button class="camera-zoom-btn" id="camera-zoom-in-btn" title="Zoom In">
+                            <i data-lucide="zoom-in"></i>
+                        </button>
+                    </div>
                     <button class="camera-upload-bg-btn" id="camera-upload-bg-btn">
                         <i data-lucide="image"></i>
                     </button>
                     <button class="camera-add-photocard-btn" id="camera-add-photocard-btn">
                         <i data-lucide="plus"></i>
-                    </button>
-                    <button class="camera-aspect-ratio-btn" id="camera-aspect-ratio-btn">3:4</button>
-                    <button class="camera-reset-photocard-btn" id="camera-reset-photocard-btn">
-                        <i data-lucide="refresh-cw"></i>
-                        <span>Reset</span>
                     </button>
                 </div>
             </div>

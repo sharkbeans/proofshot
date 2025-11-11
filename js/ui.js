@@ -58,6 +58,10 @@ const UIManager = {
             cameraAddPhotocardBtn: document.getElementById('camera-add-photocard-btn'),
             cameraAspectRatioBtn: document.getElementById('camera-aspect-ratio-btn'),
             cameraResetPhotocardBtn: document.getElementById('camera-reset-photocard-btn'),
+            cameraZoomControls: document.getElementById('camera-zoom-controls'),
+            cameraZoomSlider: document.getElementById('camera-zoom-slider'),
+            cameraZoomInBtn: document.getElementById('camera-zoom-in-btn'),
+            cameraZoomOutBtn: document.getElementById('camera-zoom-out-btn'),
             cameraActionButtons: document.getElementById('camera-action-buttons'),
             cameraSaveBtn: document.getElementById('camera-save-btn'),
             cameraDiscardBtn: document.getElementById('camera-discard-btn'),
@@ -174,6 +178,25 @@ const UIManager = {
         if (this.elements.cameraResetPhotocardBtn) {
             this.elements.cameraResetPhotocardBtn.addEventListener('click', () => {
                 this.handleCameraResetPhotocard();
+            });
+        }
+
+        // Camera zoom controls
+        if (this.elements.cameraZoomInBtn) {
+            this.elements.cameraZoomInBtn.addEventListener('click', () => {
+                this.handleCameraZoomIn();
+            });
+        }
+
+        if (this.elements.cameraZoomOutBtn) {
+            this.elements.cameraZoomOutBtn.addEventListener('click', () => {
+                this.handleCameraZoomOut();
+            });
+        }
+
+        if (this.elements.cameraZoomSlider) {
+            this.elements.cameraZoomSlider.addEventListener('input', (e) => {
+                this.handleCameraZoomSlider(e);
             });
         }
 
@@ -956,6 +979,15 @@ const UIManager = {
                 this.elements.cameraResetPhotocardBtn.classList.add('active');
             }
 
+            // Show zoom controls
+            if (this.elements.cameraZoomControls) {
+                this.elements.cameraZoomControls.classList.add('active');
+                // Reset zoom slider to default
+                if (this.elements.cameraZoomSlider) {
+                    this.elements.cameraZoomSlider.value = 1;
+                }
+            }
+
             // Make canvas container fullscreen with aspect ratio
             const canvasContainer = document.querySelector('.canvas-container');
             if (canvasContainer) {
@@ -1040,6 +1072,11 @@ const UIManager = {
             // Hide reset photocard button
             if (this.elements.cameraResetPhotocardBtn) {
                 this.elements.cameraResetPhotocardBtn.classList.remove('active');
+            }
+
+            // Hide zoom controls
+            if (this.elements.cameraZoomControls) {
+                this.elements.cameraZoomControls.classList.remove('active');
             }
 
             // Hide upload background button (keep + button visible)
@@ -1167,6 +1204,11 @@ const UIManager = {
             this.elements.cameraResetPhotocardBtn.classList.remove('active');
         }
 
+        // Hide zoom controls
+        if (this.elements.cameraZoomControls) {
+            this.elements.cameraZoomControls.classList.remove('active');
+        }
+
         // Hide action buttons
         if (this.elements.cameraActionButtons) {
             this.elements.cameraActionButtons.classList.remove('active');
@@ -1223,6 +1265,52 @@ const UIManager = {
         this.canvas.resetPhotocard();
         this.syncPhotocardSliders();
         this.showNotification('Photocard position reset', 'success');
+    },
+
+    /**
+     * Handle camera zoom in button
+     */
+    handleCameraZoomIn() {
+        // Update slider immediately for visual feedback
+        const currentZoom = this.canvas.getCameraZoom();
+        const newZoom = Math.min(10, currentZoom + 0.5);
+
+        if (this.elements.cameraZoomSlider) {
+            this.elements.cameraZoomSlider.value = newZoom;
+        }
+
+        // Apply zoom to camera
+        this.canvas.setCameraZoom(newZoom).catch(err => {
+            console.error('Zoom in failed:', err);
+        });
+    },
+
+    /**
+     * Handle camera zoom out button
+     */
+    handleCameraZoomOut() {
+        // Update slider immediately for visual feedback
+        const currentZoom = this.canvas.getCameraZoom();
+        const newZoom = Math.max(1, currentZoom - 0.5);
+
+        if (this.elements.cameraZoomSlider) {
+            this.elements.cameraZoomSlider.value = newZoom;
+        }
+
+        // Apply zoom to camera
+        this.canvas.setCameraZoom(newZoom).catch(err => {
+            console.error('Zoom out failed:', err);
+        });
+    },
+
+    /**
+     * Handle camera zoom slider input
+     */
+    handleCameraZoomSlider(e) {
+        const zoomValue = parseFloat(e.target.value);
+        this.canvas.setCameraZoom(zoomValue).catch(err => {
+            console.error('Slider zoom failed:', err);
+        });
     },
 
     /**

@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(node -c:*)",
-      "Bash(node --check:*)"
+      "Bash(node --check:*)",
+      "Bash(dir \"C:\\Git\\proofshot\")",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

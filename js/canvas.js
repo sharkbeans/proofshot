@@ -15,7 +15,11 @@ const CanvasManager = {
         stream: null,
         video: null,
         facingMode: 'environment', // 'user' for front, 'environment' for back
-        animationFrame: null
+        animationFrame: null,
+        currentZoom: 1, // Current zoom level
+        minZoom: 1,
+        maxZoom: 10,
+        supportedZoomLevel: null // Will be set based on device capabilities
     },
 
     // Background transform properties
@@ -543,6 +547,120 @@ const CanvasManager = {
         this.camera.facingMode = this.camera.facingMode === 'user' ? 'environment' : 'user';
         this.stopCamera();
         await this.startCamera();
+    },
+
+    /**
+     * Set camera zoom level
+     */
+    setCameraZoom(zoomLevel) {
+        if (!this.camera.stream || !this.camera.active) {
+            console.warn('Camera is not active');
+            return false;
+        }
+
+        // Clamp zoom level to valid range
+        const clampedZoom = Math.max(this.camera.minZoom, Math.min(this.camera.maxZoom, zoomLevel));
+        this.camera.currentZoom = clampedZoom;
+
+        // Get video track from stream
+        const videoTrack = this.camera.stream.getVideoTracks()[0];
+        if (!videoTrack) {
+            console.warn('No video track found');
+            return false;
+        }
+
+        // Try to apply zoom using getCapabilities and applyConstraints
+        try {
+            // Check if getCapabilities is supported
+            if (!videoTrack.getCapabilities) {
+                console.warn('getCapabilities not supported on this device');
+                return false;
+            }
+
+            const capabilities = videoTrack.getCapabilities();
+            console.log('Camera capabilities:', capabilities);
+
+            if (capabilities.zoom) {
+                // Update min/max zoom based on device capabilities
+                const zoomRange = capabilities.zoom;
+                if (zoomRange.min && zoomRange.max) {
+                    this.camera.minZoom = zoomRange.min;
+                    this.camera.maxZoom = zoomRange.max;
+                    console.log(`Zoom range: ${this.camera.minZoom} - ${this.camera.maxZoom}`);
+                }
+
+                // Clamp again with actual device limits
+                const deviceClampedZoom = Math.max(this.camera.minZoom, Math.min(this.camera.maxZoom, clampedZoom));
+
+                // Use zoom capability if available
+                const zoomConstraint = {
+                    advanced: [{ zoom: deviceClampedZoom }]
+                };
+                console.log('Applying zoom constraint:', zoomConstraint);
+
+                return videoTrack.applyConstraints(zoomConstraint).then(() => {
+                    console.log('Zoom applied successfully:', deviceClampedZoom);
+                    return true;
+                }).catch(err => {
+                    console.error('Could not apply zoom constraint:', err);
+                    return false;
+                });
+            } else {
+                console.warn('Zoom capability not supported on this device');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error setting camera zoom:', error);
+            return false;
+        }
+    },
+
+    /**
+     * Increase camera zoom
+     */
+    increaseCameraZoom(step = 0.5) {
+        const newZoom = this.camera.currentZoom + step;
+        return this.setCameraZoom(newZoom);
+    },
+
+    /**
+     * Decrease camera zoom
+     */
+    decreaseCameraZoom(step = 0.5) {
+        const newZoom = this.camera.currentZoom - step;
+        return this.setCameraZoom(newZoom);
+    },
+
+    /**
+     * Get current camera zoom level
+     */
+    getCameraZoom() {
+        return this.camera.currentZoom;
+    },
+
+    /**
+     * Get camera zoom constraints
+     */
+    getCameraZoomConstraints() {
+        if (!this.camera.stream) return { min: 1, max: 10 };
+
+        const videoTrack = this.camera.stream.getVideoTracks()[0];
+        if (!videoTrack) return { min: 1, max: 10 };
+
+        try {
+            const capabilities = videoTrack.getCapabilities ? videoTrack.getCapabilities() : {};
+
+            if (capabilities.zoom) {
+                return {
+                    min: capabilities.zoom.min || 1,
+                    max: capabilities.zoom.max || 10
+                };
+            }
+        } catch (error) {
+            console.warn('Error getting zoom constraints:', error);
+        }
+
+        return { min: 1, max: 10 };
     },
 
     /**
