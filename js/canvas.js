@@ -69,7 +69,12 @@ const CanvasManager = {
             return;
         }
 
-        this.ctx = this.canvas.getContext('2d');
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
+
+        // Enable high-quality image rendering
+        this.ctx.imageSmoothingEnabled = true;
+        this.ctx.imageSmoothingQuality = 'high';
+
         this.resizeCanvas();
         this.attachEventListeners();
 
@@ -127,6 +132,10 @@ const CanvasManager = {
         // (Setting canvas.width/height resets the context, so we need to reapply the scale)
         this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity matrix
         this.ctx.scale(dpr, dpr);
+
+        // Reapply high-quality rendering settings (reset when canvas size changes)
+        this.ctx.imageSmoothingEnabled = true;
+        this.ctx.imageSmoothingQuality = 'high';
 
         // Set display size (CSS handles positioning in camera mode)
         if (!isCameraActive) {

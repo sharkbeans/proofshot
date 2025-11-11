@@ -875,9 +875,12 @@ const UIManager = {
                     if (canvasContainer) {
                         canvasContainer.classList.add('camera-active');
                         this.applyAspectRatio(canvasContainer);
-                        // Resize canvas to fit fullscreen
+                        // Resize canvas to fit fullscreen and reset photocard
                         setTimeout(() => {
                             this.canvas.resizeCanvas();
+                            // Reset photocard position and scale to fit new camera canvas size
+                            this.canvas.resetPhotocard();
+                            this.syncPhotocardSliders();
                         }, 100);
                     }
 
@@ -1013,9 +1016,12 @@ const UIManager = {
             if (canvasContainer) {
                 canvasContainer.classList.add('camera-active');
                 this.applyAspectRatio(canvasContainer);
-                // Resize canvas to fit fullscreen
+                // Resize canvas to fit fullscreen and reset photocard
                 setTimeout(() => {
                     this.canvas.resizeCanvas();
+                    // Reset photocard position and scale to fit new camera canvas size
+                    this.canvas.resetPhotocard();
+                    this.syncPhotocardSliders();
                 }, 100);
             }
 
@@ -1419,9 +1425,12 @@ const UIManager = {
                 if (canvasContainer) {
                     canvasContainer.classList.add('camera-active');
                     this.applyAspectRatio(canvasContainer);
-                    // Resize canvas to fit fullscreen
+                    // Resize canvas to fit fullscreen and reset photocard
                     setTimeout(() => {
                         this.canvas.resizeCanvas();
+                        // Reset photocard position and scale to fit new camera canvas size
+                        this.canvas.resetPhotocard();
+                        this.syncPhotocardSliders();
                     }, 100);
                 }
 
