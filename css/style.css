@@ -102,6 +102,7 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
+    overflow: visible;
 }
 
 /* ===========================
@@ -117,6 +118,12 @@ body {
     margin: 0 auto;
     touch-action: none;
     user-select: none;
+}
+
+/* Preview mode after camera capture - ensure full visibility */
+.canvas-container.preview-mode {
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
 }
 
 /* Aspect ratio classes for normal mode - dimensions set by JavaScript */
@@ -673,6 +680,13 @@ input[type="range"]::-moz-range-track {
     .btn-primary span,
     .btn-success span {
         display: inline;
+    }
+
+    /* Ensure canvas preview is fully visible on mobile */
+    .canvas-container.preview-mode {
+        margin-top: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+        max-width: 100vw;
     }
 }
 

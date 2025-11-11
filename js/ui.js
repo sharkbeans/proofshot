@@ -447,6 +447,7 @@ const UIManager = {
                 const canvasContainer = document.querySelector('.canvas-container');
                 if (canvasContainer) {
                     canvasContainer.classList.remove('camera-active');
+                    canvasContainer.classList.remove('preview-mode');
                     const canvas = document.getElementById('proofshot-canvas');
                     if (canvas) {
                         canvas.style.width = '';
@@ -1104,9 +1105,17 @@ const UIManager = {
                 }
 
                 canvasContainer.classList.remove('camera-active');
+                // Add preview mode class for proper spacing
+                canvasContainer.classList.add('preview-mode');
 
                 // Keep the aspect ratio for the canvas
                 this.applyCanvasAspectRatio(canvasContainer);
+
+                // Reset positioning to ensure it's in normal document flow
+                canvasContainer.style.position = 'relative';
+                canvasContainer.style.top = 'auto';
+                canvasContainer.style.left = 'auto';
+                canvasContainer.style.zIndex = 'auto';
 
                 // Set explicit container size to match camera mode size
                 canvasContainer.style.width = capturedWidth + 'px';
@@ -1123,6 +1132,24 @@ const UIManager = {
                         canvas.style.width = capturedWidth + 'px';
                         canvas.style.height = capturedHeight + 'px';
                     }
+
+                    // Force scroll to ensure the entire canvas is visible in the preview
+                    setTimeout(() => {
+                        // Scroll to top of page first to reset viewport
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+
+                        // Then scroll to make canvas fully visible
+                        setTimeout(() => {
+                            canvasContainer.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center',
+                                inline: 'nearest'
+                            });
+                        }, 300);
+                    }, 150);
                 }, 100);
             }
 
@@ -1177,6 +1204,7 @@ const UIManager = {
         const canvasContainer = document.querySelector('.canvas-container');
         if (canvasContainer) {
             canvasContainer.classList.remove('camera-active');
+            canvasContainer.classList.remove('preview-mode');
             // Remove aspect ratio classes
             canvasContainer.classList.remove('aspect-3-4', 'aspect-9-16', 'aspect-1-1');
 
