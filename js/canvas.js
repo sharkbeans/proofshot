@@ -123,7 +123,9 @@ const CanvasManager = {
         this.canvas.width = canvasWidth * dpr;
         this.canvas.height = canvasHeight * dpr;
 
-        // Scale context to match
+        // Reset transform and scale context to match
+        // (Setting canvas.width/height resets the context, so we need to reapply the scale)
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity matrix
         this.ctx.scale(dpr, dpr);
 
         // Set display size (CSS handles positioning in camera mode)
@@ -651,9 +653,10 @@ const CanvasManager = {
      * Render the canvas
      */
     render() {
-        const rect = this.canvas.getBoundingClientRect();
-        const width = rect.width;
-        const height = rect.height;
+        // Use actual canvas dimensions (accounting for DPR scaling applied in resizeCanvas)
+        const dpr = window.devicePixelRatio || 1;
+        const width = this.canvas.width / dpr;
+        const height = this.canvas.height / dpr;
 
         // Clear canvas
         this.ctx.clearRect(0, 0, width, height);
@@ -689,9 +692,9 @@ const CanvasManager = {
      * Draw camera feed
      */
     drawCameraFeed() {
-        const rect = this.canvas.getBoundingClientRect();
-        const width = rect.width;
-        const height = rect.height;
+        const dpr = window.devicePixelRatio || 1;
+        const width = this.canvas.width / dpr;
+        const height = this.canvas.height / dpr;
 
         this.ctx.save();
 
@@ -739,9 +742,9 @@ const CanvasManager = {
      * Draw background image
      */
     drawBackground() {
-        const rect = this.canvas.getBoundingClientRect();
-        const width = rect.width;
-        const height = rect.height;
+        const dpr = window.devicePixelRatio || 1;
+        const width = this.canvas.width / dpr;
+        const height = this.canvas.height / dpr;
 
         this.ctx.save();
 
