@@ -823,7 +823,7 @@ const CanvasManager = {
     drawToploader(width, height) {
         // Toploader dimensions - overlaps photocard significantly
         const overlap = 61.8; // pixels of overlap on each side (increased by 50%)
-        const bottomOverlap = 89.25; // extra overlap at bottom (127.5 decreased by 30%)
+        const bottomOverlap = 116.025; // extra overlap at bottom (89.25 increased by 30%)
         const toploaderWidth = width + (overlap * 2);
         const toploaderHeight = height + overlap + bottomOverlap;
 
@@ -831,8 +831,8 @@ const CanvasManager = {
         const y = -(height / 2) - overlap;
         const topCornerRadius = 56;
         const bottomCornerRadius = 33.6;
-        const frameThicknessLeft = 10.08; // left border thickness
-        const frameThicknessRight = 6.24; // right border thickness
+        const frameThicknessLeft = 12.096; // left border thickness (increased by 20%)
+        const frameThicknessRight = 7.488; // right border thickness (increased by 20%)
 
         this.ctx.save();
 
