@@ -91,6 +91,7 @@ const CanvasManager = {
     resizeCanvas() {
         const container = this.canvas.parentElement;
         const isCameraActive = container.classList.contains('camera-active');
+        const isPreviewMode = container.classList.contains('preview-mode');
 
         let canvasWidth, canvasHeight;
 
@@ -116,6 +117,18 @@ const CanvasManager = {
                 canvasWidth = Math.min(vh * 0.75, vw);
                 canvasHeight = canvasWidth * (4/3);
             }
+        } else if (isPreviewMode) {
+            // Preview mode - maintain current canvas dimensions, just fit to container
+            // Use the existing canvas dimensions to maintain the captured resolution
+            const rect = container.getBoundingClientRect();
+            canvasWidth = rect.width || this.canvas.width;
+            canvasHeight = rect.height || this.canvas.height;
+
+            // Don't resize the canvas buffer in preview mode, just the display
+            this.canvas.style.width = '100%';
+            this.canvas.style.height = 'auto';
+            this.render();
+            return;
         } else {
             // Normal mode - use container dimensions
             const rect = container.getBoundingClientRect();

@@ -1128,21 +1128,22 @@ const UIManager = {
                 canvasContainer.style.left = 'auto';
                 canvasContainer.style.zIndex = 'auto';
 
-                // Set explicit container size to match camera mode size
-                canvasContainer.style.width = capturedWidth + 'px';
-                canvasContainer.style.height = capturedHeight + 'px';
-                canvasContainer.style.maxWidth = 'none';
+                // Remove explicit dimensions and let canvas resize naturally
+                canvasContainer.style.width = '';
+                canvasContainer.style.height = '';
+                canvasContainer.style.maxWidth = isMobile ? '100vw' : '800px';
+                canvasContainer.style.maxHeight = isMobile ? 'calc(100vh - 180px)' : 'none';
 
-                // Resize canvas to new aspect ratio
+                // Resize canvas to container dimensions
                 setTimeout(() => {
-                    this.canvas.resizeCanvas();
-
-                    // Ensure canvas style dimensions match container exactly for crisp rendering
+                    // Clear any inline styles on canvas
                     const canvas = document.getElementById('proofshot-canvas');
                     if (canvas) {
-                        canvas.style.width = capturedWidth + 'px';
-                        canvas.style.height = capturedHeight + 'px';
+                        canvas.style.width = '';
+                        canvas.style.height = '';
                     }
+
+                    this.canvas.resizeCanvas();
 
                     // Force scroll to ensure the entire canvas and buttons are visible
                     setTimeout(() => {

@@ -124,6 +124,16 @@ body {
 .canvas-container.preview-mode {
     margin-top: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
+    width: auto !important;
+    height: auto !important;
+    max-width: 800px;
+}
+
+.canvas-container.preview-mode #proofshot-canvas {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    display: block;
 }
 
 /* Aspect ratio classes for normal mode - dimensions set by JavaScript */
@@ -689,15 +699,17 @@ input[type="range"]::-moz-range-track {
 
     /* Ensure canvas preview is fully visible on mobile */
     .canvas-container.preview-mode {
-        margin-top: 0;
-        margin-bottom: 0;
-        max-width: 100vw;
-        max-height: calc(100vh - 180px); /* Leave room for header and action buttons */
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        max-width: 100vw !important;
+        max-height: calc(100vh - 180px) !important;
+        width: auto !important;
+        height: auto !important;
     }
 
     .canvas-container.preview-mode #proofshot-canvas {
         max-height: calc(100vh - 180px);
-        width: auto !important;
+        width: 100% !important;
         height: auto !important;
         object-fit: contain;
     }
