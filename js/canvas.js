@@ -936,20 +936,24 @@ const CanvasManager = {
         this.ctx.stroke();
 
         // Top glossy highlight (subtle reflection from light source)
-        const topHighlightGradient = this.ctx.createLinearGradient(innerX, innerY, innerX, innerY + innerHeight * 0.3);
-        topHighlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
-        topHighlightGradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.02)');
+        const topHighlightGradient = this.ctx.createLinearGradient(innerX, innerY, innerX, innerY + innerHeight * 0.36);
+        topHighlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.108)');
+        topHighlightGradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.027)');
         topHighlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
-        roundedRect(innerX, innerY, innerWidth, innerHeight * 0.3, topCornerRadius - frameThicknessLeft, 0);
+        roundedRect(innerX, innerY, innerWidth, innerHeight * 0.36, topCornerRadius - frameThicknessLeft, 0);
         this.ctx.fillStyle = topHighlightGradient;
         this.ctx.fill();
 
         // Inner shadow gradients for 3D depth effect - connecting at corners
+        // Shadow spreads all the way to photocard border
+        const photocardLeftEdge = overlap; // Distance from toploader edge to photocard edge
+        const photocardBottomEdge = bottomOverlap; // Distance from toploader bottom to photocard bottom
 
-        const leftShadowWidth = frameThicknessLeft * 1.2;
-        const rightShadowWidth = frameThicknessLeft * 1.2;
-        const bottomShadowHeight = frameThicknessBottom * 1.2;
+        const leftShadowWidth = photocardLeftEdge - frameThicknessLeft;
+        const rightShadowWidth = photocardLeftEdge - frameThicknessRight;
+        const bottomShadowHeight = photocardBottomEdge - frameThicknessBottom;
+        const topShadowHeight = photocardLeftEdge - frameThicknessLeft;
         const rightInset = 2;
 
         // Shadow corner radius to match border curvature - matches inner edge of white border
@@ -978,6 +982,26 @@ const CanvasManager = {
             }
             this.ctx.closePath();
         };
+
+        // Top inner shadow gradient (North) - full width including corners
+        const topShadowGradient = this.ctx.createLinearGradient(
+            x,
+            y + frameThicknessLeft,
+            x,
+            y + frameThicknessLeft + topShadowHeight
+        );
+        topShadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.125)');
+        topShadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        this.ctx.fillStyle = topShadowGradient;
+        createRoundedShadowPath(
+            x + frameThicknessLeft,
+            y + frameThicknessLeft,
+            toploaderWidth - frameThicknessLeft - frameThicknessRight,
+            topShadowHeight,
+            shadowTopCornerRadius, shadowTopCornerRadius, 0, 0
+        );
+        this.ctx.fill();
 
         // Left inner shadow gradient (West) - full height including corners
         const leftShadowGradient = this.ctx.createLinearGradient(
