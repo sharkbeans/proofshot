@@ -1004,11 +1004,9 @@ const CanvasManager = {
             let loadedFrames = 0;
 
             frames.forEach((frame, index) => {
-                // Handle frame disposal - always start with white background for opaque rendering
+                // Handle frame disposal
                 if (index === 0 || (index > 0 && frames[index - 1].disposalType === 2)) {
-                    // Fill with white instead of clearing (prevents transparency)
-                    tempCtx.fillStyle = '#FFFFFF';
-                    tempCtx.fillRect(0, 0, gifWidth, gifHeight);
+                    tempCtx.clearRect(0, 0, gifWidth, gifHeight);
                 }
 
                 // Draw the current frame patch
@@ -1075,20 +1073,7 @@ const CanvasManager = {
                 imageData.data.set(framePixels);
                 tempCtx.putImageData(imageData, 0, 0);
 
-                // Create an opaque version by compositing with white
-                const opaqueCanvas = document.createElement('canvas');
-                opaqueCanvas.width = width;
-                opaqueCanvas.height = height;
-                const opaqueCtx = opaqueCanvas.getContext('2d');
-
-                // Fill with white background
-                opaqueCtx.fillStyle = '#FFFFFF';
-                opaqueCtx.fillRect(0, 0, width, height);
-
-                // Draw the frame on top
-                opaqueCtx.drawImage(tempCanvas, 0, 0);
-
-                // Convert opaque version to Image
+                // Convert to Image
                 const img = new Image();
                 img.onload = () => {
                     loadedFrames++;
@@ -1102,7 +1087,7 @@ const CanvasManager = {
                     reject(new Error(`Failed to load GIF frame ${i}`));
                 };
 
-                img.src = opaqueCanvas.toDataURL('image/png');
+                img.src = tempCanvas.toDataURL('image/png');
                 imageFrames[i] = img;
                 // Convert delay from centiseconds to milliseconds
                 delays[i] = (frameInfo.delay || 10) * 10;
