@@ -920,8 +920,75 @@ const UIManager = {
      * Show loading indicator
      */
     showLoading(message = 'Loading...') {
-        // Simple implementation - could be enhanced with a proper loading overlay
         console.log('Loading:', message);
+
+        // Create loading overlay if it doesn't exist
+        let loadingOverlay = document.getElementById('loading-overlay');
+        if (!loadingOverlay) {
+            loadingOverlay = document.createElement('div');
+            loadingOverlay.id = 'loading-overlay';
+            loadingOverlay.innerHTML = `
+                <div class="loading-content">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-message">Loading...</div>
+                </div>
+            `;
+
+            // Add styles
+            Object.assign(loadingOverlay.style, {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                right: '0',
+                bottom: '0',
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: '10000',
+                backdropFilter: 'blur(4px)'
+            });
+
+            document.body.appendChild(loadingOverlay);
+
+            // Add spinner styles if not already added
+            if (!document.getElementById('loading-styles')) {
+                const style = document.createElement('style');
+                style.id = 'loading-styles';
+                style.textContent = `
+                    .loading-content {
+                        text-align: center;
+                        color: white;
+                    }
+                    .loading-spinner {
+                        width: 50px;
+                        height: 50px;
+                        margin: 0 auto 20px;
+                        border: 4px solid rgba(255, 255, 255, 0.3);
+                        border-top: 4px solid white;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                    }
+                    .loading-message {
+                        font-size: 1.1rem;
+                        font-weight: 600;
+                    }
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        // Update message
+        const messageEl = loadingOverlay.querySelector('.loading-message');
+        if (messageEl) {
+            messageEl.textContent = message;
+        }
+
+        loadingOverlay.style.display = 'flex';
     },
 
     /**
@@ -929,6 +996,10 @@ const UIManager = {
      */
     hideLoading() {
         console.log('Loading complete');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
     },
 
     /**

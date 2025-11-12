@@ -938,86 +938,168 @@ const CanvasManager = {
     async parseGif(arrayBuffer) {
         return new Promise((resolve, reject) => {
             try {
-                // Check if gifuct-js is available
-                if (typeof window.gifuct === 'undefined' && typeof gifuct === 'undefined') {
-                    console.error('GIF parser library not loaded');
-                    reject(new Error('GIF parser library not loaded. Please reload the page.'));
-                    return;
+                // Check if gifuct-js is available - try multiple possible export names
+                let gifuctLib = null;
+
+                if (typeof window.gifuct !== 'undefined') {
+                    gifuctLib = window.gifuct;
+                } else if (typeof gifuct !== 'undefined') {
+                    gifuctLib = gifuct;
+                } else if (typeof window.GifuctJs !== 'undefined') {
+                    gifuctLib = window.GifuctJs;
                 }
 
-                const gifuctLib = window.gifuct || gifuct;
+                // If gifuct is available, use it
+                if (gifuctLib) {
+                    console.log('Parsing GIF with gifuct-js');
+                    const gif = gifuctLib.parseGIF(arrayBuffer);
+                    const frames = gifuctLib.decompressFrames(gif, true);
 
-                console.log('Parsing GIF...');
-                const gif = gifuctLib.parseGIF(arrayBuffer);
-                const frames = gifuctLib.decompressFrames(gif, true);
+                    console.log(`GIF parsed: ${frames.length} frames`);
 
-                console.log(`GIF parsed: ${frames.length} frames`);
-
-                if (frames.length === 0) {
-                    reject(new Error('GIF has no frames'));
-                    return;
+                    return this.processGifuctFrames(frames, resolve, reject);
                 }
 
-                const imageFrames = [];
-                const delays = [];
+                // Fallback to omggif if available
+                if (typeof window.GifReader !== 'undefined') {
+                    console.log('Parsing GIF with omggif (fallback)');
+                    return this.parseGifWithOmggif(arrayBuffer, resolve, reject);
+                }
 
-                // Get GIF dimensions from first frame
-                const gifWidth = frames[0].dims.width;
-                const gifHeight = frames[0].dims.height;
-
-                // Create a persistent canvas for composition
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = gifWidth;
-                tempCanvas.height = gifHeight;
-                const tempCtx = tempCanvas.getContext('2d');
-
-                // Convert each frame to an Image object
-                let loadedFrames = 0;
-
-                frames.forEach((frame, index) => {
-                    // Handle frame disposal
-                    if (index > 0) {
-                        const prevFrame = frames[index - 1];
-                        // If disposal method is 2 (restore to background), clear the canvas
-                        if (prevFrame.disposalType === 2) {
-                            tempCtx.clearRect(0, 0, gifWidth, gifHeight);
-                        }
-                        // If disposal method is 3 (restore to previous), we'd need to keep a copy
-                        // For simplicity, we'll just handle 0, 1, and 2
-                    }
-
-                    // Draw the current frame patch
-                    const imageData = tempCtx.createImageData(frame.dims.width, frame.dims.height);
-                    imageData.data.set(frame.patch);
-                    tempCtx.putImageData(imageData, frame.dims.left, frame.dims.top);
-
-                    // Convert current canvas state to Image
-                    const img = new Image();
-                    img.onload = () => {
-                        loadedFrames++;
-                        if (loadedFrames === frames.length) {
-                            console.log('All GIF frames loaded successfully');
-                            resolve({ frames: imageFrames, delays });
-                        }
-                    };
-                    img.onerror = (error) => {
-                        console.error('Failed to load GIF frame:', error);
-                        reject(new Error(`Failed to load GIF frame ${index}`));
-                    };
-
-                    // Create a snapshot of the current canvas state
-                    img.src = tempCanvas.toDataURL('image/png');
-
-                    imageFrames[index] = img;
-                    // Convert delay from centiseconds to milliseconds
-                    delays[index] = (frame.delay || 10) * 10; // Default to 100ms if no delay
-                });
-
+                // No GIF library available
+                console.error('GIF parser library not loaded. Available globals:', Object.keys(window).filter(k => k.toLowerCase().includes('gif')));
+                reject(new Error('GIF parser library not loaded. Please reload the page.'));
             } catch (error) {
                 console.error('Error parsing GIF:', error);
                 reject(error);
             }
         });
+    },
+
+    /**
+     * Process frames from gifuct-js
+     */
+    processGifuctFrames(frames, resolve, reject) {
+        try {
+
+            if (frames.length === 0) {
+                reject(new Error('GIF has no frames'));
+                return;
+            }
+
+            const imageFrames = [];
+            const delays = [];
+
+            // Get GIF dimensions from first frame
+            const gifWidth = frames[0].dims.width;
+            const gifHeight = frames[0].dims.height;
+
+            // Create a persistent canvas for composition
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = gifWidth;
+            tempCanvas.height = gifHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Convert each frame to an Image object
+            let loadedFrames = 0;
+
+            frames.forEach((frame, index) => {
+                // Handle frame disposal
+                if (index > 0) {
+                    const prevFrame = frames[index - 1];
+                    // If disposal method is 2 (restore to background), clear the canvas
+                    if (prevFrame.disposalType === 2) {
+                        tempCtx.clearRect(0, 0, gifWidth, gifHeight);
+                    }
+                }
+
+                // Draw the current frame patch
+                const imageData = tempCtx.createImageData(frame.dims.width, frame.dims.height);
+                imageData.data.set(frame.patch);
+                tempCtx.putImageData(imageData, frame.dims.left, frame.dims.top);
+
+                // Convert current canvas state to Image
+                const img = new Image();
+                img.onload = () => {
+                    loadedFrames++;
+                    if (loadedFrames === frames.length) {
+                        console.log('All GIF frames loaded successfully');
+                        resolve({ frames: imageFrames, delays });
+                    }
+                };
+                img.onerror = (error) => {
+                    console.error('Failed to load GIF frame:', error);
+                    reject(new Error(`Failed to load GIF frame ${index}`));
+                };
+
+                // Create a snapshot of the current canvas state
+                img.src = tempCanvas.toDataURL('image/png');
+
+                imageFrames[index] = img;
+                // Convert delay from centiseconds to milliseconds
+                delays[index] = (frame.delay || 10) * 10; // Default to 100ms if no delay
+            });
+        } catch (error) {
+            reject(error);
+        }
+    },
+
+    /**
+     * Parse GIF using omggif library (fallback)
+     */
+    parseGifWithOmggif(arrayBuffer, resolve, reject) {
+        try {
+            const bytes = new Uint8Array(arrayBuffer);
+            const reader = new window.GifReader(bytes);
+
+            const imageFrames = [];
+            const delays = [];
+            const width = reader.width;
+            const height = reader.height;
+
+            console.log(`GIF parsed with omggif: ${reader.numFrames()} frames, ${width}x${height}`);
+
+            // Create a persistent canvas for composition
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            let loadedFrames = 0;
+
+            for (let i = 0; i < reader.numFrames(); i++) {
+                const frameInfo = reader.frameInfo(i);
+                const framePixels = new Uint8ClampedArray(width * height * 4);
+                reader.decodeAndBlitFrameRGBA(i, framePixels);
+
+                // Create ImageData and draw to canvas
+                const imageData = tempCtx.createImageData(width, height);
+                imageData.data.set(framePixels);
+                tempCtx.putImageData(imageData, 0, 0);
+
+                // Convert to Image
+                const img = new Image();
+                img.onload = () => {
+                    loadedFrames++;
+                    if (loadedFrames === reader.numFrames()) {
+                        console.log('All GIF frames loaded successfully (omggif)');
+                        resolve({ frames: imageFrames, delays });
+                    }
+                };
+                img.onerror = (error) => {
+                    console.error('Failed to load GIF frame:', error);
+                    reject(new Error(`Failed to load GIF frame ${i}`));
+                };
+
+                img.src = tempCanvas.toDataURL('image/png');
+                imageFrames[i] = img;
+                // Convert delay from centiseconds to milliseconds
+                delays[i] = (frameInfo.delay || 10) * 10;
+            }
+        } catch (error) {
+            console.error('Error parsing GIF with omggif:', error);
+            reject(error);
+        }
     },
 
     /**
@@ -1828,76 +1910,107 @@ const CanvasManager = {
     /**
      * Export canvas as animated GIF
      */
-    exportAsGif() {
-        return new Promise((resolve, reject) => {
+    async exportAsGif() {
+        try {
+            // Check if gif.js is available
+            if (typeof GIF === 'undefined') {
+                throw new Error('GIF encoder library not loaded');
+            }
+
+            // Determine the number of frames to export
+            const photocardFrameCount = this.photocardGif.isGif ? this.photocardGif.frames.length : 1;
+            const backgroundFrameCount = this.backgroundGif.isGif ? this.backgroundGif.frames.length : 1;
+            const totalFrames = Math.max(photocardFrameCount, backgroundFrameCount);
+
+            // Create GIF encoder
+            const dpr = window.devicePixelRatio || 1;
+            const width = this.canvas.width / dpr;
+            const height = this.canvas.height / dpr;
+
+            // Create inline worker to avoid CORS issues
+            let workerScriptUrl;
             try {
-                // Check if gif.js is available
-                if (typeof GIF === 'undefined') {
-                    reject(new Error('GIF encoder library not loaded'));
-                    return;
+                // Fetch the worker script and create a blob URL
+                const workerResponse = await fetch('https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js');
+                const workerBlob = await workerResponse.blob();
+                workerScriptUrl = URL.createObjectURL(workerBlob);
+            } catch (error) {
+                console.warn('Failed to load worker script, falling back to no workers:', error);
+                workerScriptUrl = undefined;
+            }
+
+            const gif = new GIF({
+                workers: workerScriptUrl ? 2 : 0, // Use workers if available
+                quality: 10,
+                width: width,
+                height: height,
+                workerScript: workerScriptUrl
+            });
+
+            console.log(`Exporting GIF with ${totalFrames} frames...`);
+
+            // Render each frame
+            for (let i = 0; i < totalFrames; i++) {
+                if (i % 10 === 0) {
+                    console.log(`Processing frame ${i + 1}/${totalFrames}...`);
+                }
+                // Update images to the correct frame
+                if (this.photocardGif.isGif) {
+                    this.photocardImage = this.photocardGif.frames[i % photocardFrameCount];
+                }
+                if (this.backgroundGif.isGif) {
+                    this.backgroundImage = this.backgroundGif.frames[i % backgroundFrameCount];
                 }
 
-                // Determine the number of frames to export
-                const photocardFrameCount = this.photocardGif.isGif ? this.photocardGif.frames.length : 1;
-                const backgroundFrameCount = this.backgroundGif.isGif ? this.backgroundGif.frames.length : 1;
-                const totalFrames = Math.max(photocardFrameCount, backgroundFrameCount);
+                // Render the frame
+                this.render();
 
-                // Create GIF encoder
-                const dpr = window.devicePixelRatio || 1;
-                const width = this.canvas.width / dpr;
-                const height = this.canvas.height / dpr;
-
-                const gif = new GIF({
-                    workers: 2,
-                    quality: 10,
-                    width: width,
-                    height: height,
-                    workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'
-                });
-
-                // Render each frame
-                for (let i = 0; i < totalFrames; i++) {
-                    // Update images to the correct frame
-                    if (this.photocardGif.isGif) {
-                        this.photocardImage = this.photocardGif.frames[i % photocardFrameCount];
-                    }
-                    if (this.backgroundGif.isGif) {
-                        this.backgroundImage = this.backgroundGif.frames[i % backgroundFrameCount];
-                    }
-
-                    // Render the frame
-                    this.render();
-
-                    // Calculate delay (use the longer delay if both are animated)
-                    let delay = 100; // Default delay
-                    if (this.photocardGif.isGif && this.backgroundGif.isGif) {
-                        const photocardDelay = this.photocardGif.delays[i % photocardFrameCount];
-                        const backgroundDelay = this.backgroundGif.delays[i % backgroundFrameCount];
-                        delay = Math.max(photocardDelay, backgroundDelay);
-                    } else if (this.photocardGif.isGif) {
-                        delay = this.photocardGif.delays[i % photocardFrameCount];
-                    } else if (this.backgroundGif.isGif) {
-                        delay = this.backgroundGif.delays[i % backgroundFrameCount];
-                    }
-
-                    // Add frame to GIF
-                    gif.addFrame(this.canvas, { copy: true, delay: delay });
+                // Calculate delay (use the longer delay if both are animated)
+                let delay = 100; // Default delay
+                if (this.photocardGif.isGif && this.backgroundGif.isGif) {
+                    const photocardDelay = this.photocardGif.delays[i % photocardFrameCount];
+                    const backgroundDelay = this.backgroundGif.delays[i % backgroundFrameCount];
+                    delay = Math.max(photocardDelay, backgroundDelay);
+                } else if (this.photocardGif.isGif) {
+                    delay = this.photocardGif.delays[i % photocardFrameCount];
+                } else if (this.backgroundGif.isGif) {
+                    delay = this.backgroundGif.delays[i % backgroundFrameCount];
                 }
 
-                // Generate GIF
+                // Add frame to GIF
+                gif.addFrame(this.canvas, { copy: true, delay: delay });
+            }
+
+            // Generate GIF and return as a promise
+            return new Promise((resolve, reject) => {
                 gif.on('finished', (blob) => {
+                    console.log('GIF encoding complete!');
+                    // Clean up worker script URL if it was created
+                    if (workerScriptUrl) {
+                        URL.revokeObjectURL(workerScriptUrl);
+                    }
                     resolve(blob);
                 });
 
                 gif.on('error', (error) => {
+                    console.error('GIF encoding error:', error);
+                    // Clean up worker script URL if it was created
+                    if (workerScriptUrl) {
+                        URL.revokeObjectURL(workerScriptUrl);
+                    }
                     reject(error);
                 });
 
+                gif.on('progress', (progress) => {
+                    console.log(`GIF encoding progress: ${Math.round(progress * 100)}%`);
+                });
+
+                console.log('Starting GIF encoding...');
                 gif.render();
-            } catch (error) {
-                reject(error);
-            }
-        });
+            });
+        } catch (error) {
+            throw error;
+        }
     },
 
     /**
