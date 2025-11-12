@@ -841,18 +841,19 @@ input[type="range"]::-moz-range-track {
 
 .camera-controls {
     position: fixed;
-    bottom: 80px;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
     display: none;
     flex-direction: column;
     align-items: center;
-    padding: var(--spacing-md) var(--spacing-md) var(--spacing-lg) var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-xs) var(--spacing-sm);
     background: transparent;
     pointer-events: none;
     z-index: 1001;
     width: 100%;
     max-width: 75vh;
+    padding-bottom: max(var(--spacing-xs), env(safe-area-inset-bottom));
 }
 
 .camera-controls.active {
@@ -866,7 +867,7 @@ input[type="range"]::-moz-range-track {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
 }
 
 /* Shutter Button - iOS Camera Style */
@@ -1031,8 +1032,8 @@ input[type="range"]::-moz-range-track {
     align-items: center;
     justify-content: center;
     gap: var(--spacing-sm);
-    margin-top: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
+    margin-top: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
     pointer-events: auto;
 }
 
@@ -1113,13 +1114,14 @@ input[type="range"]::-moz-range-track {
     left: 0;
     right: 0;
     width: 100%;
-    height: 60px;
+    height: 70px;
     background: #000;
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-sm) 0 var(--spacing-sm);
     border-radius: 0;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
     z-index: 1002;
     align-items: center;
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
 }
 
 .camera-action-buttons.active {
@@ -1130,7 +1132,8 @@ input[type="range"]::-moz-range-track {
 @media (max-width: 767px) {
     .camera-action-buttons {
         width: 100%;
-        padding: var(--spacing-xs) var(--spacing-sm) var(--spacing-sm) var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-sm) 0 var(--spacing-sm);
+        padding-bottom: max(0px, env(safe-area-inset-bottom));
     }
 }
 
@@ -1164,8 +1167,8 @@ input[type="range"]::-moz-range-track {
     .camera-discard-btn,
     .camera-save-btn {
         font-size: 1rem;
-        padding: var(--spacing-md) var(--spacing-lg);
-        min-height: 50px;
+        padding: var(--spacing-sm) var(--spacing-lg);
+        min-height: 46px;
     }
 }
 
