@@ -766,19 +766,14 @@ const CanvasManager = {
                     const arrayBuffer = e.target.result;
                     const gif = await this.parseGif(arrayBuffer);
 
-                    // Store GIF frames
                     this.backgroundGif.isGif = true;
                     this.backgroundGif.frames = gif.frames;
                     this.backgroundGif.delays = gif.delays;
                     this.backgroundGif.currentFrame = 0;
                     this.backgroundGif.lastFrameTime = performance.now();
 
-                    // Set the first frame as the background image
                     this.backgroundImage = gif.frames[0];
-
-                    // Start GIF animation
                     this.startBackgroundGifAnimation();
-
                     this.render();
                     resolve();
                 } catch (error) {
@@ -893,32 +888,24 @@ const CanvasManager = {
                     const arrayBuffer = e.target.result;
                     const gif = await this.parseGif(arrayBuffer);
 
-                    // Store GIF frames
                     this.photocardGif.isGif = true;
                     this.photocardGif.frames = gif.frames;
                     this.photocardGif.delays = gif.delays;
                     this.photocardGif.currentFrame = 0;
                     this.photocardGif.lastFrameTime = performance.now();
 
-                    // Set the first frame as the photocard image
                     this.photocardImage = gif.frames[0];
                     this.isPlaceholder = false;
 
-                    // Remove placeholder-active class
                     this.canvas.classList.remove('placeholder-active');
-
-                    // Reset cursor to grab
                     this.canvas.style.cursor = 'grab';
 
-                    // Center photocard on canvas
                     const rect = this.canvas.getBoundingClientRect();
                     this.photocard.x = rect.width / 2;
                     this.photocard.y = rect.height / 2;
                     this.photocard.scale = Math.min(rect.width, rect.height) / (gif.frames[0].width * 1.5);
 
-                    // Start GIF animation
                     this.startPhotocardGifAnimation();
-
                     this.render();
                     resolve();
                 } catch (error) {
@@ -1004,17 +991,13 @@ const CanvasManager = {
             let loadedFrames = 0;
 
             frames.forEach((frame, index) => {
-                // Handle frame disposal
-                if (index === 0 || (index > 0 && frames[index - 1].disposalType === 2)) {
-                    tempCtx.clearRect(0, 0, gifWidth, gifHeight);
-                }
-
+                // Never clear - accumulate frames to avoid transparency
                 // Draw the current frame patch
                 const imageData = tempCtx.createImageData(frame.dims.width, frame.dims.height);
                 imageData.data.set(frame.patch);
                 tempCtx.putImageData(imageData, frame.dims.left, frame.dims.top);
 
-                // Convert current canvas state to Image
+                // Convert to Image
                 const img = new Image();
                 img.onload = () => {
                     loadedFrames++;
@@ -1028,12 +1011,9 @@ const CanvasManager = {
                     reject(new Error(`Failed to load GIF frame ${index}`));
                 };
 
-                // Create a snapshot of the current canvas state
                 img.src = tempCanvas.toDataURL('image/png');
-
                 imageFrames[index] = img;
-                // Convert delay from centiseconds to milliseconds
-                delays[index] = (frame.delay || 10) * 10; // Default to 100ms if no delay
+                delays[index] = (frame.delay || 10) * 10;
             });
         } catch (error) {
             reject(error);
@@ -1068,7 +1048,7 @@ const CanvasManager = {
                 const framePixels = new Uint8ClampedArray(width * height * 4);
                 reader.decodeAndBlitFrameRGBA(i, framePixels);
 
-                // Create ImageData and draw to canvas
+                // Create ImageData and draw to canvas (accumulate, don't clear)
                 const imageData = tempCtx.createImageData(width, height);
                 imageData.data.set(framePixels);
                 tempCtx.putImageData(imageData, 0, 0);
@@ -1089,7 +1069,6 @@ const CanvasManager = {
 
                 img.src = tempCanvas.toDataURL('image/png');
                 imageFrames[i] = img;
-                // Convert delay from centiseconds to milliseconds
                 delays[i] = (frameInfo.delay || 10) * 10;
             }
         } catch (error) {
@@ -1111,7 +1090,6 @@ const CanvasManager = {
             const delay = this.photocardGif.delays[this.photocardGif.currentFrame];
 
             if (elapsed >= delay) {
-                // Move to next frame
                 this.photocardGif.currentFrame = (this.photocardGif.currentFrame + 1) % this.photocardGif.frames.length;
                 this.photocardImage = this.photocardGif.frames[this.photocardGif.currentFrame];
                 this.photocardGif.lastFrameTime = currentTime;
@@ -1137,7 +1115,6 @@ const CanvasManager = {
             const delay = this.backgroundGif.delays[this.backgroundGif.currentFrame];
 
             if (elapsed >= delay) {
-                // Move to next frame
                 this.backgroundGif.currentFrame = (this.backgroundGif.currentFrame + 1) % this.backgroundGif.frames.length;
                 this.backgroundImage = this.backgroundGif.frames[this.backgroundGif.currentFrame];
                 this.backgroundGif.lastFrameTime = currentTime;
