@@ -1336,8 +1336,9 @@ const CanvasManager = {
         const height = this.photocardImage.height;
         this.ctx.drawImage(this.photocardImage, -width / 2, -height / 2, width, height);
 
-        // Draw toploader overlay if enabled
-        if (this.photocard.showToploader) {
+        // Draw toploader overlay if enabled AND photocard is NOT a GIF
+        // Skip toploader for GIFs to prevent transparency artifacts and flashing
+        if (this.photocard.showToploader && !this.photocardGif.isGif) {
             this.drawToploader(width, height);
         }
 
