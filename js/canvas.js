@@ -939,51 +939,82 @@ const CanvasManager = {
         return new Promise((resolve, reject) => {
             try {
                 // Check if gifuct-js is available
-                if (typeof gifuct === 'undefined') {
-                    reject(new Error('GIF parser library not loaded'));
+                if (typeof window.gifuct === 'undefined' && typeof gifuct === 'undefined') {
+                    console.error('GIF parser library not loaded');
+                    reject(new Error('GIF parser library not loaded. Please reload the page.'));
                     return;
                 }
 
-                const gif = gifuct.parseGIF(arrayBuffer);
-                const frames = gifuct.decompressFrames(gif, true);
+                const gifuctLib = window.gifuct || gifuct;
+
+                console.log('Parsing GIF...');
+                const gif = gifuctLib.parseGIF(arrayBuffer);
+                const frames = gifuctLib.decompressFrames(gif, true);
+
+                console.log(`GIF parsed: ${frames.length} frames`);
+
+                if (frames.length === 0) {
+                    reject(new Error('GIF has no frames'));
+                    return;
+                }
 
                 const imageFrames = [];
                 const delays = [];
 
+                // Get GIF dimensions from first frame
+                const gifWidth = frames[0].dims.width;
+                const gifHeight = frames[0].dims.height;
+
+                // Create a persistent canvas for composition
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = gifWidth;
+                tempCanvas.height = gifHeight;
+                const tempCtx = tempCanvas.getContext('2d');
+
                 // Convert each frame to an Image object
                 let loadedFrames = 0;
+
                 frames.forEach((frame, index) => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = frame.dims.width;
-                    canvas.height = frame.dims.height;
-                    const ctx = canvas.getContext('2d');
+                    // Handle frame disposal
+                    if (index > 0) {
+                        const prevFrame = frames[index - 1];
+                        // If disposal method is 2 (restore to background), clear the canvas
+                        if (prevFrame.disposalType === 2) {
+                            tempCtx.clearRect(0, 0, gifWidth, gifHeight);
+                        }
+                        // If disposal method is 3 (restore to previous), we'd need to keep a copy
+                        // For simplicity, we'll just handle 0, 1, and 2
+                    }
 
-                    // Create ImageData from frame patch
-                    const imageData = ctx.createImageData(frame.dims.width, frame.dims.height);
+                    // Draw the current frame patch
+                    const imageData = tempCtx.createImageData(frame.dims.width, frame.dims.height);
                     imageData.data.set(frame.patch);
-                    ctx.putImageData(imageData, 0, 0);
+                    tempCtx.putImageData(imageData, frame.dims.left, frame.dims.top);
 
-                    // Convert canvas to Image
+                    // Convert current canvas state to Image
                     const img = new Image();
                     img.onload = () => {
                         loadedFrames++;
                         if (loadedFrames === frames.length) {
+                            console.log('All GIF frames loaded successfully');
                             resolve({ frames: imageFrames, delays });
                         }
                     };
-                    img.onerror = () => {
-                        reject(new Error('Failed to load GIF frame'));
+                    img.onerror = (error) => {
+                        console.error('Failed to load GIF frame:', error);
+                        reject(new Error(`Failed to load GIF frame ${index}`));
                     };
-                    img.src = canvas.toDataURL();
+
+                    // Create a snapshot of the current canvas state
+                    img.src = tempCanvas.toDataURL('image/png');
 
                     imageFrames[index] = img;
-                    delays[index] = frame.delay || 100; // Default to 100ms if no delay
+                    // Convert delay from centiseconds to milliseconds
+                    delays[index] = (frame.delay || 10) * 10; // Default to 100ms if no delay
                 });
 
-                if (frames.length === 0) {
-                    reject(new Error('GIF has no frames'));
-                }
             } catch (error) {
+                console.error('Error parsing GIF:', error);
                 reject(error);
             }
         });
