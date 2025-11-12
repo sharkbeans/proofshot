@@ -1004,13 +1004,11 @@ const CanvasManager = {
             let loadedFrames = 0;
 
             frames.forEach((frame, index) => {
-                // Handle frame disposal
-                if (index > 0) {
-                    const prevFrame = frames[index - 1];
-                    // If disposal method is 2 (restore to background), clear the canvas
-                    if (prevFrame.disposalType === 2) {
-                        tempCtx.clearRect(0, 0, gifWidth, gifHeight);
-                    }
+                // Handle frame disposal - always start with white background for opaque rendering
+                if (index === 0 || (index > 0 && frames[index - 1].disposalType === 2)) {
+                    // Fill with white instead of clearing (prevents transparency)
+                    tempCtx.fillStyle = '#FFFFFF';
+                    tempCtx.fillRect(0, 0, gifWidth, gifHeight);
                 }
 
                 // Draw the current frame patch
@@ -1077,7 +1075,20 @@ const CanvasManager = {
                 imageData.data.set(framePixels);
                 tempCtx.putImageData(imageData, 0, 0);
 
-                // Convert to Image
+                // Create an opaque version by compositing with white
+                const opaqueCanvas = document.createElement('canvas');
+                opaqueCanvas.width = width;
+                opaqueCanvas.height = height;
+                const opaqueCtx = opaqueCanvas.getContext('2d');
+
+                // Fill with white background
+                opaqueCtx.fillStyle = '#FFFFFF';
+                opaqueCtx.fillRect(0, 0, width, height);
+
+                // Draw the frame on top
+                opaqueCtx.drawImage(tempCanvas, 0, 0);
+
+                // Convert opaque version to Image
                 const img = new Image();
                 img.onload = () => {
                     loadedFrames++;
@@ -1091,7 +1102,7 @@ const CanvasManager = {
                     reject(new Error(`Failed to load GIF frame ${i}`));
                 };
 
-                img.src = tempCanvas.toDataURL('image/png');
+                img.src = opaqueCanvas.toDataURL('image/png');
                 imageFrames[i] = img;
                 // Convert delay from centiseconds to milliseconds
                 delays[i] = (frameInfo.delay || 10) * 10;
@@ -1336,9 +1347,8 @@ const CanvasManager = {
         const height = this.photocardImage.height;
         this.ctx.drawImage(this.photocardImage, -width / 2, -height / 2, width, height);
 
-        // Draw toploader overlay if enabled AND photocard is NOT a GIF
-        // Skip toploader for GIFs to prevent transparency artifacts and flashing
-        if (this.photocard.showToploader && !this.photocardGif.isGif) {
+        // Draw toploader overlay if enabled
+        if (this.photocard.showToploader) {
             this.drawToploader(width, height);
         }
 
