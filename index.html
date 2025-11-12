@@ -14,6 +14,12 @@
 
     <!-- QRCode.js -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <!-- GIF Parsing Library -->
+    <script src="https://cdn.jsdelivr.net/npm/gifuct-js@2.1.2/dist/gifuct-js.min.js"></script>
+
+    <!-- GIF Encoding Library for Export -->
+    <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -281,8 +287,8 @@
     </div>
 
     <!-- Hidden File Inputs -->
-    <input type="file" id="bg-file-input" accept="image/*" style="display: none;">
-    <input type="file" id="photocard-file-input" accept="image/*" style="display: none;">
+    <input type="file" id="bg-file-input" accept="image/*,image/gif" style="display: none;">
+    <input type="file" id="photocard-file-input" accept="image/*,image/gif" style="display: none;">
 
     <!-- Hidden Video Element for Camera -->
     <video id="camera-video" autoplay playsinline style="display: none;"></video>

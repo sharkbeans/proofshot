@@ -9,6 +9,25 @@ const CanvasManager = {
     backgroundImage: null,
     photocardImage: null,
 
+    // GIF animation properties
+    photocardGif: {
+        isGif: false,
+        frames: [],
+        delays: [],
+        currentFrame: 0,
+        lastFrameTime: 0,
+        animationFrame: null
+    },
+
+    backgroundGif: {
+        isGif: false,
+        frames: [],
+        delays: [],
+        currentFrame: 0,
+        lastFrameTime: 0,
+        animationFrame: null
+    },
+
     // Camera properties
     camera: {
         active: false,
@@ -710,12 +729,19 @@ const CanvasManager = {
      */
     loadBackground(file) {
         return new Promise((resolve, reject) => {
+            // Check if it's a GIF
+            if (file.type === 'image/gif') {
+                this.loadBackgroundGif(file).then(resolve).catch(reject);
+                return;
+            }
+
             const reader = new FileReader();
 
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
                     this.backgroundImage = img;
+                    this.backgroundGif.isGif = false;
                     this.render();
                     resolve();
                 };
@@ -725,6 +751,44 @@ const CanvasManager = {
 
             reader.onerror = reject;
             reader.readAsDataURL(file);
+        });
+    },
+
+    /**
+     * Load background GIF and parse frames
+     */
+    async loadBackgroundGif(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = async (e) => {
+                try {
+                    const arrayBuffer = e.target.result;
+                    const gif = await this.parseGif(arrayBuffer);
+
+                    // Store GIF frames
+                    this.backgroundGif.isGif = true;
+                    this.backgroundGif.frames = gif.frames;
+                    this.backgroundGif.delays = gif.delays;
+                    this.backgroundGif.currentFrame = 0;
+                    this.backgroundGif.lastFrameTime = performance.now();
+
+                    // Set the first frame as the background image
+                    this.backgroundImage = gif.frames[0];
+
+                    // Start GIF animation
+                    this.startBackgroundGifAnimation();
+
+                    this.render();
+                    resolve();
+                } catch (error) {
+                    console.error('Error parsing GIF:', error);
+                    reject(error);
+                }
+            };
+
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
         });
     },
 
@@ -778,6 +842,12 @@ const CanvasManager = {
      */
     loadPhotocard(file) {
         return new Promise((resolve, reject) => {
+            // Check if it's a GIF
+            if (file.type === 'image/gif') {
+                this.loadPhotocardGif(file).then(resolve).catch(reject);
+                return;
+            }
+
             const reader = new FileReader();
 
             reader.onload = (e) => {
@@ -785,6 +855,7 @@ const CanvasManager = {
                 img.onload = () => {
                     this.photocardImage = img;
                     this.isPlaceholder = false;
+                    this.photocardGif.isGif = false;
 
                     // Remove placeholder-active class
                     this.canvas.classList.remove('placeholder-active');
@@ -808,6 +879,186 @@ const CanvasManager = {
             reader.onerror = reject;
             reader.readAsDataURL(file);
         });
+    },
+
+    /**
+     * Load photocard GIF and parse frames
+     */
+    async loadPhotocardGif(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = async (e) => {
+                try {
+                    const arrayBuffer = e.target.result;
+                    const gif = await this.parseGif(arrayBuffer);
+
+                    // Store GIF frames
+                    this.photocardGif.isGif = true;
+                    this.photocardGif.frames = gif.frames;
+                    this.photocardGif.delays = gif.delays;
+                    this.photocardGif.currentFrame = 0;
+                    this.photocardGif.lastFrameTime = performance.now();
+
+                    // Set the first frame as the photocard image
+                    this.photocardImage = gif.frames[0];
+                    this.isPlaceholder = false;
+
+                    // Remove placeholder-active class
+                    this.canvas.classList.remove('placeholder-active');
+
+                    // Reset cursor to grab
+                    this.canvas.style.cursor = 'grab';
+
+                    // Center photocard on canvas
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.photocard.x = rect.width / 2;
+                    this.photocard.y = rect.height / 2;
+                    this.photocard.scale = Math.min(rect.width, rect.height) / (gif.frames[0].width * 1.5);
+
+                    // Start GIF animation
+                    this.startPhotocardGifAnimation();
+
+                    this.render();
+                    resolve();
+                } catch (error) {
+                    console.error('Error parsing GIF:', error);
+                    reject(error);
+                }
+            };
+
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    },
+
+    /**
+     * Parse GIF file into frames
+     */
+    async parseGif(arrayBuffer) {
+        return new Promise((resolve, reject) => {
+            try {
+                // Check if gifuct-js is available
+                if (typeof gifuct === 'undefined') {
+                    reject(new Error('GIF parser library not loaded'));
+                    return;
+                }
+
+                const gif = gifuct.parseGIF(arrayBuffer);
+                const frames = gifuct.decompressFrames(gif, true);
+
+                const imageFrames = [];
+                const delays = [];
+
+                // Convert each frame to an Image object
+                let loadedFrames = 0;
+                frames.forEach((frame, index) => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = frame.dims.width;
+                    canvas.height = frame.dims.height;
+                    const ctx = canvas.getContext('2d');
+
+                    // Create ImageData from frame patch
+                    const imageData = ctx.createImageData(frame.dims.width, frame.dims.height);
+                    imageData.data.set(frame.patch);
+                    ctx.putImageData(imageData, 0, 0);
+
+                    // Convert canvas to Image
+                    const img = new Image();
+                    img.onload = () => {
+                        loadedFrames++;
+                        if (loadedFrames === frames.length) {
+                            resolve({ frames: imageFrames, delays });
+                        }
+                    };
+                    img.onerror = () => {
+                        reject(new Error('Failed to load GIF frame'));
+                    };
+                    img.src = canvas.toDataURL();
+
+                    imageFrames[index] = img;
+                    delays[index] = frame.delay || 100; // Default to 100ms if no delay
+                });
+
+                if (frames.length === 0) {
+                    reject(new Error('GIF has no frames'));
+                }
+            } catch (error) {
+                reject(error);
+            }
+        });
+    },
+
+    /**
+     * Start photocard GIF animation
+     */
+    startPhotocardGifAnimation() {
+        if (!this.photocardGif.isGif || this.photocardGif.frames.length === 0) return;
+
+        const animate = (currentTime) => {
+            if (!this.photocardGif.isGif) return;
+
+            const elapsed = currentTime - this.photocardGif.lastFrameTime;
+            const delay = this.photocardGif.delays[this.photocardGif.currentFrame];
+
+            if (elapsed >= delay) {
+                // Move to next frame
+                this.photocardGif.currentFrame = (this.photocardGif.currentFrame + 1) % this.photocardGif.frames.length;
+                this.photocardImage = this.photocardGif.frames[this.photocardGif.currentFrame];
+                this.photocardGif.lastFrameTime = currentTime;
+                this.render();
+            }
+
+            this.photocardGif.animationFrame = requestAnimationFrame(animate);
+        };
+
+        this.photocardGif.animationFrame = requestAnimationFrame(animate);
+    },
+
+    /**
+     * Start background GIF animation
+     */
+    startBackgroundGifAnimation() {
+        if (!this.backgroundGif.isGif || this.backgroundGif.frames.length === 0) return;
+
+        const animate = (currentTime) => {
+            if (!this.backgroundGif.isGif) return;
+
+            const elapsed = currentTime - this.backgroundGif.lastFrameTime;
+            const delay = this.backgroundGif.delays[this.backgroundGif.currentFrame];
+
+            if (elapsed >= delay) {
+                // Move to next frame
+                this.backgroundGif.currentFrame = (this.backgroundGif.currentFrame + 1) % this.backgroundGif.frames.length;
+                this.backgroundImage = this.backgroundGif.frames[this.backgroundGif.currentFrame];
+                this.backgroundGif.lastFrameTime = currentTime;
+                this.render();
+            }
+
+            this.backgroundGif.animationFrame = requestAnimationFrame(animate);
+        };
+
+        this.backgroundGif.animationFrame = requestAnimationFrame(animate);
+    },
+
+    /**
+     * Stop photocard GIF animation
+     */
+    stopPhotocardGifAnimation() {
+        if (this.photocardGif.animationFrame) {
+            cancelAnimationFrame(this.photocardGif.animationFrame);
+            this.photocardGif.animationFrame = null;
+        }
+    },
+
+    /**
+     * Stop background GIF animation
+     */
+    stopBackgroundGifAnimation() {
+        if (this.backgroundGif.animationFrame) {
+            cancelAnimationFrame(this.backgroundGif.animationFrame);
+            this.backgroundGif.animationFrame = null;
+        }
     },
 
     /**
@@ -1456,9 +1707,33 @@ const CanvasManager = {
      * Reset canvas
      */
     reset() {
+        // Stop any GIF animations
+        this.stopPhotocardGifAnimation();
+        this.stopBackgroundGifAnimation();
+
         this.backgroundImage = null;
         this.photocardImage = null;
         this.isPlaceholder = false;
+
+        // Reset GIF states
+        this.photocardGif = {
+            isGif: false,
+            frames: [],
+            delays: [],
+            currentFrame: 0,
+            lastFrameTime: 0,
+            animationFrame: null
+        };
+
+        this.backgroundGif = {
+            isGif: false,
+            frames: [],
+            delays: [],
+            currentFrame: 0,
+            lastFrameTime: 0,
+            animationFrame: null
+        };
+
         this.background = {
             x: 0,
             y: 0,
@@ -1483,9 +1758,16 @@ const CanvasManager = {
     },
 
     /**
-     * Export canvas as image
+     * Export canvas as image (PNG or GIF)
      */
-    exportImage() {
+    exportImage(asGif = false) {
+        // Check if we should export as GIF
+        const hasGif = this.photocardGif.isGif || this.backgroundGif.isGif;
+
+        if (asGif && hasGif) {
+            return this.exportAsGif();
+        }
+
         return new Promise((resolve, reject) => {
             try {
                 // Create a temporary canvas for export
@@ -1510,6 +1792,88 @@ const CanvasManager = {
                 reject(error);
             }
         });
+    },
+
+    /**
+     * Export canvas as animated GIF
+     */
+    exportAsGif() {
+        return new Promise((resolve, reject) => {
+            try {
+                // Check if gif.js is available
+                if (typeof GIF === 'undefined') {
+                    reject(new Error('GIF encoder library not loaded'));
+                    return;
+                }
+
+                // Determine the number of frames to export
+                const photocardFrameCount = this.photocardGif.isGif ? this.photocardGif.frames.length : 1;
+                const backgroundFrameCount = this.backgroundGif.isGif ? this.backgroundGif.frames.length : 1;
+                const totalFrames = Math.max(photocardFrameCount, backgroundFrameCount);
+
+                // Create GIF encoder
+                const dpr = window.devicePixelRatio || 1;
+                const width = this.canvas.width / dpr;
+                const height = this.canvas.height / dpr;
+
+                const gif = new GIF({
+                    workers: 2,
+                    quality: 10,
+                    width: width,
+                    height: height,
+                    workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'
+                });
+
+                // Render each frame
+                for (let i = 0; i < totalFrames; i++) {
+                    // Update images to the correct frame
+                    if (this.photocardGif.isGif) {
+                        this.photocardImage = this.photocardGif.frames[i % photocardFrameCount];
+                    }
+                    if (this.backgroundGif.isGif) {
+                        this.backgroundImage = this.backgroundGif.frames[i % backgroundFrameCount];
+                    }
+
+                    // Render the frame
+                    this.render();
+
+                    // Calculate delay (use the longer delay if both are animated)
+                    let delay = 100; // Default delay
+                    if (this.photocardGif.isGif && this.backgroundGif.isGif) {
+                        const photocardDelay = this.photocardGif.delays[i % photocardFrameCount];
+                        const backgroundDelay = this.backgroundGif.delays[i % backgroundFrameCount];
+                        delay = Math.max(photocardDelay, backgroundDelay);
+                    } else if (this.photocardGif.isGif) {
+                        delay = this.photocardGif.delays[i % photocardFrameCount];
+                    } else if (this.backgroundGif.isGif) {
+                        delay = this.backgroundGif.delays[i % backgroundFrameCount];
+                    }
+
+                    // Add frame to GIF
+                    gif.addFrame(this.canvas, { copy: true, delay: delay });
+                }
+
+                // Generate GIF
+                gif.on('finished', (blob) => {
+                    resolve(blob);
+                });
+
+                gif.on('error', (error) => {
+                    reject(error);
+                });
+
+                gif.render();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    },
+
+    /**
+     * Check if current composition has GIF animation
+     */
+    hasGifAnimation() {
+        return this.photocardGif.isGif || this.backgroundGif.isGif;
     },
 
     /**
