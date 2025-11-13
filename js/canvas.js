@@ -824,6 +824,7 @@ const CanvasManager = {
             video.autoplay = false;
 
             const url = URL.createObjectURL(file);
+            let initialized = false;
 
             video.onloadedmetadata = () => {
                 // Store the video element
@@ -837,6 +838,10 @@ const CanvasManager = {
             };
 
             video.onseeked = () => {
+                // Only initialize once to avoid issues on loop
+                if (initialized) return;
+                initialized = true;
+
                 // Video is ready at first frame
                 this.backgroundImage = video;
 
@@ -1008,6 +1013,7 @@ const CanvasManager = {
             video.autoplay = false;
 
             const url = URL.createObjectURL(file);
+            let initialized = false;
 
             video.onloadedmetadata = () => {
                 // Store the video element
@@ -1022,6 +1028,10 @@ const CanvasManager = {
             };
 
             video.onseeked = () => {
+                // Only initialize once to avoid resetting on loop
+                if (initialized) return;
+                initialized = true;
+
                 // Video is ready at first frame
                 this.photocardImage = video;
 
