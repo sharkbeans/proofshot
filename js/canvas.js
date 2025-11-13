@@ -28,6 +28,21 @@ const CanvasManager = {
         animationFrame: null
     },
 
+    // Video properties
+    photocardVideo: {
+        isVideo: false,
+        element: null,
+        originalFile: null,
+        animationFrame: null
+    },
+
+    backgroundVideo: {
+        isVideo: false,
+        element: null,
+        originalFile: null,
+        animationFrame: null
+    },
+
     // Camera properties
     camera: {
         active: false,
@@ -837,6 +852,12 @@ const CanvasManager = {
      */
     loadPhotocard(file) {
         return new Promise((resolve, reject) => {
+            // Check if it's a video
+            if (file.type.startsWith('video/')) {
+                this.loadPhotocardVideo(file).then(resolve).catch(reject);
+                return;
+            }
+
             // Check if it's a GIF
             if (file.type === 'image/gif') {
                 this.loadPhotocardGif(file).then(resolve).catch(reject);
@@ -851,6 +872,7 @@ const CanvasManager = {
                     this.photocardImage = img;
                     this.isPlaceholder = false;
                     this.photocardGif.isGif = false;
+                    this.photocardVideo.isVideo = false;
 
                     // Remove placeholder-active class
                     this.canvas.classList.remove('placeholder-active');
@@ -916,6 +938,60 @@ const CanvasManager = {
 
             reader.onerror = reject;
             reader.readAsArrayBuffer(file);
+        });
+    },
+
+    /**
+     * Load photocard video
+     */
+    async loadPhotocardVideo(file) {
+        return new Promise((resolve, reject) => {
+            const video = document.createElement('video');
+            video.muted = true;
+            video.loop = true;
+            video.playsInline = true;
+            video.autoplay = false;
+
+            const url = URL.createObjectURL(file);
+
+            video.onloadedmetadata = () => {
+                // Store the video element
+                this.photocardVideo.isVideo = true;
+                this.photocardVideo.element = video;
+                this.photocardVideo.originalFile = file;
+                this.photocardGif.isGif = false;
+                this.isPlaceholder = false;
+
+                // Create an image from the first frame for initial display
+                video.currentTime = 0;
+            };
+
+            video.onseeked = () => {
+                // Video is ready at first frame
+                this.photocardImage = video;
+
+                this.canvas.classList.remove('placeholder-active');
+                this.canvas.style.cursor = 'grab';
+
+                const rect = this.canvas.getBoundingClientRect();
+                this.photocard.x = rect.width / 2;
+                this.photocard.y = rect.height / 2;
+                this.photocard.scale = Math.min(rect.width, rect.height) / (video.videoWidth * 1.5);
+
+                // Start video playback and animation
+                video.play().then(() => {
+                    this.startPhotocardVideoAnimation();
+                    this.render();
+                    resolve();
+                }).catch(reject);
+            };
+
+            video.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error('Failed to load video'));
+            };
+
+            video.src = url;
         });
     },
 
@@ -1148,6 +1224,35 @@ const CanvasManager = {
     },
 
     /**
+     * Start photocard video animation
+     */
+    startPhotocardVideoAnimation() {
+        if (!this.photocardVideo.isVideo || !this.photocardVideo.element) return;
+
+        const animate = () => {
+            if (!this.photocardVideo.isVideo) return;
+
+            this.render();
+            this.photocardVideo.animationFrame = requestAnimationFrame(animate);
+        };
+
+        this.photocardVideo.animationFrame = requestAnimationFrame(animate);
+    },
+
+    /**
+     * Stop photocard video animation
+     */
+    stopPhotocardVideoAnimation() {
+        if (this.photocardVideo.animationFrame) {
+            cancelAnimationFrame(this.photocardVideo.animationFrame);
+            this.photocardVideo.animationFrame = null;
+        }
+        if (this.photocardVideo.element) {
+            this.photocardVideo.element.pause();
+        }
+    },
+
+    /**
      * Render the canvas
      */
     render() {
@@ -1305,8 +1410,9 @@ const CanvasManager = {
         this.ctx.scale(scaleX, scaleY);
 
         // Draw image centered
-        const width = this.photocardImage.width;
-        const height = this.photocardImage.height;
+        // Handle both image and video elements
+        const width = this.photocardImage.videoWidth || this.photocardImage.width;
+        const height = this.photocardImage.videoHeight || this.photocardImage.height;
         this.ctx.drawImage(this.photocardImage, -width / 2, -height / 2, width, height);
 
         // Draw toploader overlay if enabled
@@ -1797,6 +1903,9 @@ const CanvasManager = {
         this.stopPhotocardGifAnimation();
         this.stopBackgroundGifAnimation();
 
+        // Stop any video animations
+        this.stopPhotocardVideoAnimation();
+
         this.backgroundImage = null;
         this.photocardImage = null;
         this.isPlaceholder = false;
@@ -1817,6 +1926,27 @@ const CanvasManager = {
             delays: [],
             currentFrame: 0,
             lastFrameTime: 0,
+            animationFrame: null
+        };
+
+        // Reset video states
+        if (this.photocardVideo.element) {
+            const url = this.photocardVideo.element.src;
+            if (url && url.startsWith('blob:')) {
+                URL.revokeObjectURL(url);
+            }
+        }
+        this.photocardVideo = {
+            isVideo: false,
+            element: null,
+            originalFile: null,
+            animationFrame: null
+        };
+
+        this.backgroundVideo = {
+            isVideo: false,
+            element: null,
+            originalFile: null,
             animationFrame: null
         };
 
@@ -1991,6 +2121,89 @@ const CanvasManager = {
      */
     hasGifAnimation() {
         return this.photocardGif.isGif || this.backgroundGif.isGif;
+    },
+
+    /**
+     * Check if current composition has video
+     */
+    hasVideo() {
+        return this.photocardVideo.isVideo || this.backgroundVideo.isVideo;
+    },
+
+    /**
+     * Export canvas as video
+     */
+    async exportAsVideo(duration = null) {
+        try {
+            // If no duration specified, use video duration or default to 10 seconds
+            if (!duration) {
+                if (this.photocardVideo.isVideo && this.photocardVideo.element) {
+                    duration = this.photocardVideo.element.duration;
+                } else {
+                    duration = 10; // Default 10 seconds
+                }
+            }
+
+            // Create a canvas stream
+            const stream = this.canvas.captureStream(30); // 30 fps
+
+            // Check for supported mime types
+            const mimeTypes = [
+                'video/webm;codecs=vp9',
+                'video/webm;codecs=vp8',
+                'video/webm',
+                'video/mp4'
+            ];
+
+            let mimeType = 'video/webm';
+            for (const type of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(type)) {
+                    mimeType = type;
+                    console.log('Using mime type:', type);
+                    break;
+                }
+            }
+
+            const mediaRecorder = new MediaRecorder(stream, {
+                mimeType: mimeType,
+                videoBitsPerSecond: 2500000 // 2.5 Mbps
+            });
+
+            const chunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    chunks.push(event.data);
+                }
+            };
+
+            return new Promise((resolve, reject) => {
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: mimeType });
+                    console.log('Video encoding complete!');
+                    resolve(blob);
+                };
+
+                mediaRecorder.onerror = (error) => {
+                    console.error('MediaRecorder error:', error);
+                    reject(error);
+                };
+
+                // Start recording
+                mediaRecorder.start();
+                console.log(`Recording video for ${duration} seconds...`);
+
+                // Stop after duration
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                    // Stop all tracks in the stream
+                    stream.getTracks().forEach(track => track.stop());
+                }, duration * 1000);
+            });
+        } catch (error) {
+            console.error('Error exporting video:', error);
+            throw error;
+        }
     },
 
     /**

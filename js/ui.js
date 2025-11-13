@@ -582,24 +582,42 @@ const UIManager = {
 
         // Save/share the image first
         try {
-            // Check if we have GIF animation
+            // Check if we have video, GIF animation, or static image
+            const hasVideo = this.canvas.hasVideo();
             const hasGif = this.canvas.hasGifAnimation();
-            const exportAsGif = hasGif;
+            const exportAsVideo = hasVideo;
+            const exportAsGif = !hasVideo && hasGif;
 
-            if (exportAsGif) {
+            if (exportAsVideo) {
+                this.showLoading('Generating video...');
+            } else if (exportAsGif) {
                 this.showLoading('Generating animated GIF...');
             } else {
                 this.showLoading('Exporting...');
             }
 
             const isMobile = window.innerWidth <= 767;
-            const extension = exportAsGif ? 'gif' : 'png';
+            let extension, mimeType, blob;
+
+            if (exportAsVideo) {
+                extension = 'webm';
+                mimeType = 'video/webm';
+                blob = await this.canvas.exportAsVideo();
+            } else if (exportAsGif) {
+                extension = 'gif';
+                mimeType = 'image/gif';
+                blob = await this.canvas.exportImage(true);
+            } else {
+                extension = 'png';
+                mimeType = 'image/png';
+                blob = await this.canvas.exportImage(false);
+            }
+
             const filename = `proofshot-${Date.now()}.${extension}`;
 
             // Use Web Share API on mobile
             if (isMobile) {
-                const blob = await this.canvas.exportImage(exportAsGif);
-                const file = new File([blob], filename, { type: exportAsGif ? 'image/gif' : 'image/png' });
+                const file = new File([blob], filename, { type: mimeType });
 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     try {
@@ -613,19 +631,23 @@ const UIManager = {
                         if (shareError.name !== 'AbortError') {
                             // Fallback to download
                             this.downloadBlob(blob, filename);
-                            this.showNotification('Photo saved!', 'success');
+                            this.showNotification('Saved!', 'success');
                         }
                     }
                 } else {
                     // Fallback to download
                     this.downloadBlob(blob, filename);
-                    this.showNotification('Photo saved!', 'success');
+                    this.showNotification('Saved!', 'success');
                 }
             } else {
                 // Desktop: standard download
-                const blob = await this.canvas.exportImage(exportAsGif);
                 this.downloadBlob(blob, filename);
-                const message = exportAsGif ? 'Animated GIF saved successfully' : 'Proofshot saved successfully';
+                let message = 'Proofshot saved successfully';
+                if (exportAsVideo) {
+                    message = 'Video saved successfully';
+                } else if (exportAsGif) {
+                    message = 'Animated GIF saved successfully';
+                }
                 this.showNotification(message, 'success');
             }
 
