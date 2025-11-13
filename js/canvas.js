@@ -506,8 +506,11 @@ const CanvasManager = {
         const scaledY = localY / this.photocard.scale;
 
         // Check if within image bounds
-        const halfWidth = this.photocardImage.width / 2;
-        const halfHeight = this.photocardImage.height / 2;
+        // Handle both image and video elements
+        const width = this.photocardImage.videoWidth || this.photocardImage.width;
+        const height = this.photocardImage.videoHeight || this.photocardImage.height;
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
 
         return Math.abs(scaledX) <= halfWidth && Math.abs(scaledY) <= halfHeight;
     },
@@ -744,6 +747,12 @@ const CanvasManager = {
      */
     loadBackground(file) {
         return new Promise((resolve, reject) => {
+            // Check if it's a video
+            if (file.type.startsWith('video/')) {
+                this.loadBackgroundVideo(file).then(resolve).catch(reject);
+                return;
+            }
+
             // Check if it's a GIF
             if (file.type === 'image/gif') {
                 this.loadBackgroundGif(file).then(resolve).catch(reject);
@@ -757,6 +766,7 @@ const CanvasManager = {
                 img.onload = () => {
                     this.backgroundImage = img;
                     this.backgroundGif.isGif = false;
+                    this.backgroundVideo.isVideo = false;
                     this.render();
                     resolve();
                 };
@@ -799,6 +809,51 @@ const CanvasManager = {
 
             reader.onerror = reject;
             reader.readAsArrayBuffer(file);
+        });
+    },
+
+    /**
+     * Load background video
+     */
+    async loadBackgroundVideo(file) {
+        return new Promise((resolve, reject) => {
+            const video = document.createElement('video');
+            video.muted = true;
+            video.loop = true;
+            video.playsInline = true;
+            video.autoplay = false;
+
+            const url = URL.createObjectURL(file);
+
+            video.onloadedmetadata = () => {
+                // Store the video element
+                this.backgroundVideo.isVideo = true;
+                this.backgroundVideo.element = video;
+                this.backgroundVideo.originalFile = file;
+                this.backgroundGif.isGif = false;
+
+                // Create an image from the first frame for initial display
+                video.currentTime = 0;
+            };
+
+            video.onseeked = () => {
+                // Video is ready at first frame
+                this.backgroundImage = video;
+
+                // Start video playback and animation
+                video.play().then(() => {
+                    this.startBackgroundVideoAnimation();
+                    this.render();
+                    resolve();
+                }).catch(reject);
+            };
+
+            video.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error('Failed to load video'));
+            };
+
+            video.src = url;
         });
     },
 
@@ -1253,6 +1308,35 @@ const CanvasManager = {
     },
 
     /**
+     * Start background video animation
+     */
+    startBackgroundVideoAnimation() {
+        if (!this.backgroundVideo.isVideo || !this.backgroundVideo.element) return;
+
+        const animate = () => {
+            if (!this.backgroundVideo.isVideo) return;
+
+            this.render();
+            this.backgroundVideo.animationFrame = requestAnimationFrame(animate);
+        };
+
+        this.backgroundVideo.animationFrame = requestAnimationFrame(animate);
+    },
+
+    /**
+     * Stop background video animation
+     */
+    stopBackgroundVideoAnimation() {
+        if (this.backgroundVideo.animationFrame) {
+            cancelAnimationFrame(this.backgroundVideo.animationFrame);
+            this.backgroundVideo.animationFrame = null;
+        }
+        if (this.backgroundVideo.element) {
+            this.backgroundVideo.element.pause();
+        }
+    },
+
+    /**
      * Render the canvas
      */
     render() {
@@ -1352,7 +1436,10 @@ const CanvasManager = {
         this.ctx.save();
 
         // Calculate default cover sizing
-        const imgRatio = this.backgroundImage.width / this.backgroundImage.height;
+        // Handle both image and video elements
+        const imgWidth = this.backgroundImage.videoWidth || this.backgroundImage.width;
+        const imgHeight = this.backgroundImage.videoHeight || this.backgroundImage.height;
+        const imgRatio = imgWidth / imgHeight;
         const canvasRatio = width / height;
 
         let baseWidth, baseHeight;
@@ -1841,10 +1928,11 @@ const CanvasManager = {
     resetPhotocard() {
         if (!this.photocardImage) return;
         const rect = this.canvas.getBoundingClientRect();
+        const imgWidth = this.photocardImage.videoWidth || this.photocardImage.width;
         this.photocard = {
             x: rect.width / 2,
             y: rect.height / 2,
-            scale: Math.min(rect.width, rect.height) / (this.photocardImage.width * 1.5),
+            scale: Math.min(rect.width, rect.height) / (imgWidth * 1.5),
             rotation: 0,
             flipH: false,
             flipV: false,
@@ -1905,6 +1993,7 @@ const CanvasManager = {
 
         // Stop any video animations
         this.stopPhotocardVideoAnimation();
+        this.stopBackgroundVideoAnimation();
 
         this.backgroundImage = null;
         this.photocardImage = null;
@@ -1932,6 +2021,12 @@ const CanvasManager = {
         // Reset video states
         if (this.photocardVideo.element) {
             const url = this.photocardVideo.element.src;
+            if (url && url.startsWith('blob:')) {
+                URL.revokeObjectURL(url);
+            }
+        }
+        if (this.backgroundVideo.element) {
+            const url = this.backgroundVideo.element.src;
             if (url && url.startsWith('blob:')) {
                 URL.revokeObjectURL(url);
             }

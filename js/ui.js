@@ -435,8 +435,8 @@ const UIManager = {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (!file.type.startsWith('image/')) {
-            this.showNotification('Please select a valid image file', 'error');
+        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+            this.showNotification('Please select a valid image or video file', 'error');
             return;
         }
 
@@ -512,8 +512,8 @@ const UIManager = {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (!file.type.startsWith('image/')) {
-            this.showNotification('Please select a valid image file', 'error');
+        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+            this.showNotification('Please select a valid image or video file', 'error');
             return;
         }
 
@@ -536,22 +536,22 @@ const UIManager = {
      */
     async handleDrop(e) {
         const files = Array.from(e.dataTransfer.files);
-        const imageFiles = files.filter(f => f.type.startsWith('image/'));
+        const mediaFiles = files.filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
 
-        if (imageFiles.length === 0) {
-            this.showNotification('Please drop image files', 'error');
+        if (mediaFiles.length === 0) {
+            this.showNotification('Please drop image or video files', 'error');
             return;
         }
 
-        // First image as background, second as photocard
-        if (imageFiles.length >= 1) {
-            await this.canvas.loadBackground(imageFiles[0]);
+        // First file as background, second as photocard
+        if (mediaFiles.length >= 1) {
+            await this.canvas.loadBackground(mediaFiles[0]);
             this.syncBackgroundSliders();
             this.hideCanvasOverlay();
         }
 
-        if (imageFiles.length >= 2) {
-            await this.canvas.loadPhotocard(imageFiles[1]);
+        if (mediaFiles.length >= 2) {
+            await this.canvas.loadPhotocard(mediaFiles[1]);
             this.syncPhotocardSliders();
         }
     },
