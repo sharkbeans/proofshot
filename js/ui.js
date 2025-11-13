@@ -625,8 +625,10 @@ const UIManager = {
             if (isMobile) {
                 const file = new File([blob], filename, { type: mimeType });
 
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                // Try to use Share API if available
+                if (navigator.share) {
                     try {
+                        // Attempt to share directly - iOS sometimes works even if canShare returns false
                         await navigator.share({
                             files: [file],
                             title: 'Proofshot',
@@ -634,14 +636,17 @@ const UIManager = {
                         });
                         this.showNotification('Shared successfully', 'success');
                     } catch (shareError) {
-                        if (shareError.name !== 'AbortError') {
-                            // Fallback to download
+                        console.log('Share error:', shareError.name, shareError.message);
+                        if (shareError.name === 'AbortError') {
+                            // User cancelled, do nothing
+                        } else {
+                            // Share failed, fallback to download
                             this.downloadBlob(blob, filename);
                             this.showNotification('Saved!', 'success');
                         }
                     }
                 } else {
-                    // Fallback to download
+                    // Share API not available, use download
                     this.downloadBlob(blob, filename);
                     this.showNotification('Saved!', 'success');
                 }
@@ -692,23 +697,28 @@ const UIManager = {
             if (isMobile) {
                 const file = new File([blob], filename, { type: mimeType });
 
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                // Try to use Share API if available
+                if (navigator.share) {
                     try {
+                        // Attempt to share directly - iOS sometimes works even if canShare returns false
                         await navigator.share({
                             files: [file],
-                            title: 'Proofshot',
-                            text: 'Check out my proofshot!'
+                            title: 'Proofshot Video',
+                            text: 'Check out my proofshot video!'
                         });
                         this.showNotification('Shared successfully', 'success');
                     } catch (shareError) {
-                        if (shareError.name !== 'AbortError') {
-                            // Fallback to download
+                        console.log('Share error:', shareError.name, shareError.message);
+                        if (shareError.name === 'AbortError') {
+                            // User cancelled, do nothing
+                        } else {
+                            // Share failed, fallback to download
                             this.downloadBlob(blob, filename);
                             this.showNotification('Video saved!', 'success');
                         }
                     }
                 } else {
-                    // Fallback to download
+                    // Share API not available, use download
                     this.downloadBlob(blob, filename);
                     this.showNotification('Video saved!', 'success');
                 }
@@ -1662,8 +1672,9 @@ const UIManager = {
             const file = new File([blob], filename, { type: mimeType });
 
             // Use mobile share API
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            if (navigator.share) {
                 try {
+                    // Attempt to share directly - iOS sometimes works even if canShare returns false
                     await navigator.share({
                         files: [file],
                         title: 'Proofshot',
@@ -1677,14 +1688,17 @@ const UIManager = {
                     }
                     this.showNotification(message, 'success');
                 } catch (shareError) {
-                    if (shareError.name !== 'AbortError') {
-                        // Fallback to download
+                    console.log('Share error:', shareError.name, shareError.message);
+                    if (shareError.name === 'AbortError') {
+                        // User cancelled, do nothing
+                    } else {
+                        // Share failed, fallback to download
                         this.downloadBlob(blob, filename);
                         this.showNotification('Saved!', 'success');
                     }
                 }
             } else {
-                // Fallback to download
+                // Share API not available, use download
                 this.downloadBlob(blob, filename);
                 this.showNotification('Saved!', 'success');
             }
