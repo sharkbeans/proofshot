@@ -625,7 +625,11 @@ const UIManager = {
             if (isMobile) {
                 const file = new File([blob], filename, { type: mimeType });
 
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                // For videos, skip canShare check as iOS often reports false even though it works
+                // For images/GIFs, use canShare check as normal
+                const shouldSkipCanShare = exportAsVideo;
+
+                if (navigator.share && (shouldSkipCanShare || (navigator.canShare && navigator.canShare({ files: [file] })))) {
                     try {
                         await navigator.share({
                             files: [file],
@@ -692,7 +696,8 @@ const UIManager = {
             if (isMobile) {
                 const file = new File([blob], filename, { type: mimeType });
 
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                // For videos, skip canShare check as iOS often reports false even though it works
+                if (navigator.share) {
                     try {
                         await navigator.share({
                             files: [file],
@@ -1662,7 +1667,10 @@ const UIManager = {
             const file = new File([blob], filename, { type: mimeType });
 
             // Use mobile share API
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            // For videos, skip canShare check as iOS often reports false even though it works
+            const shouldSkipCanShare = exportAsVideo;
+
+            if (navigator.share && (shouldSkipCanShare || (navigator.canShare && navigator.canShare({ files: [file] })))) {
                 try {
                     await navigator.share({
                         files: [file],
