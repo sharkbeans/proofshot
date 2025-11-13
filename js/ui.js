@@ -103,6 +103,7 @@ const UIManager = {
             // Action buttons
             resetBtn: document.getElementById('reset-btn'),
             saveBtn: document.getElementById('save-btn'),
+            saveVideoBtn: document.getElementById('save-video-btn'),
             qrBtn: document.getElementById('qr-btn'),
 
             // Canvas overlay
@@ -327,6 +328,10 @@ const UIManager = {
 
         this.elements.saveBtn.addEventListener('click', () => {
             this.handleSave();
+        });
+
+        this.elements.saveVideoBtn.addEventListener('click', () => {
+            this.handleSaveAsVideo();
         });
 
         this.elements.qrBtn.addEventListener('click', () => {
@@ -656,6 +661,66 @@ const UIManager = {
         } catch (error) {
             console.error('Error saving:', error);
             this.showNotification('Failed to save proofshot', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    },
+
+    /**
+     * Handle save as video - always exports as video
+     */
+    async handleSaveAsVideo() {
+        if (!this.canvas.backgroundImage) {
+            this.showNotification('Please add a background image before saving', 'error');
+            return;
+        }
+
+        try {
+            this.showLoading('Generating video...');
+
+            const isMobile = window.innerWidth <= 767;
+            const extension = 'webm';
+            const mimeType = 'video/webm';
+            const filename = `proofshot-${Date.now()}.${extension}`;
+
+            // Export as video
+            const blob = await this.canvas.exportAsVideo();
+
+            // Use Web Share API on mobile
+            if (isMobile) {
+                const file = new File([blob], filename, { type: mimeType });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Proofshot',
+                            text: 'Check out my proofshot!'
+                        });
+                        this.showNotification('Shared successfully', 'success');
+                    } catch (shareError) {
+                        if (shareError.name !== 'AbortError') {
+                            // Fallback to download
+                            this.downloadBlob(blob, filename);
+                            this.showNotification('Video saved!', 'success');
+                        }
+                    }
+                } else {
+                    // Fallback to download
+                    this.downloadBlob(blob, filename);
+                    this.showNotification('Video saved!', 'success');
+                }
+            } else {
+                // Desktop: standard download
+                this.downloadBlob(blob, filename);
+                this.showNotification('Video saved successfully', 'success');
+            }
+
+            // After saving, show the "What's next?" modal
+            this.openSaveConfirmationModal();
+        } catch (error) {
+            console.error('Error saving video:', error);
+            this.showNotification('Failed to save video', 'error');
         } finally {
             this.hideLoading();
         }
