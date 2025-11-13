@@ -7,6 +7,34 @@ const UIManager = {
     elements: {},
     cameraAspectRatio: '3:4', // Default aspect ratio
     canvasAspectRatio: '3:4', // Canvas aspect ratio after capture
+    photocardFileInputTimeout: null, // Debounce for double file picker on Android
+
+    /**
+     * Detect if the device is Android
+     */
+    isAndroid() {
+        return /Android/i.test(navigator.userAgent);
+    },
+
+    /**
+     * Safely trigger photocard file input with debouncing to prevent double prompts on Android
+     */
+    triggerPhotocardFileInput() {
+        // Clear any existing timeout
+        if (this.photocardFileInputTimeout) {
+            clearTimeout(this.photocardFileInputTimeout);
+        }
+
+        // Click the file input
+        if (this.elements.photocardFileInput) {
+            this.elements.photocardFileInput.click();
+        }
+
+        // Set a cooldown period to prevent multiple rapid clicks
+        this.photocardFileInputTimeout = setTimeout(() => {
+            this.photocardFileInputTimeout = null;
+        }, 500);
+    },
 
     /**
      * Initialize UI manager
@@ -141,7 +169,7 @@ const UIManager = {
         });
 
         this.elements.uploadPhotocardBtn.addEventListener('click', () => {
-            this.elements.photocardFileInput.click();
+            this.triggerPhotocardFileInput();
         });
 
         // Camera button
@@ -621,8 +649,8 @@ const UIManager = {
 
             const filename = `proofshot-${Date.now()}.${extension}`;
 
-            // Use Web Share API on mobile
-            if (isMobile) {
+            // Use Web Share API on mobile (except Android - use direct download for Android)
+            if (isMobile && !this.isAndroid()) {
                 const file = new File([blob], filename, { type: mimeType });
 
                 // For videos, skip canShare check as iOS often reports false even though it works
@@ -650,7 +678,7 @@ const UIManager = {
                     this.showNotification('Saved!', 'success');
                 }
             } else {
-                // Desktop: standard download
+                // Desktop or Android: standard download
                 this.downloadBlob(blob, filename);
                 let message = 'Proofshot saved successfully';
                 if (exportAsVideo) {
@@ -692,8 +720,8 @@ const UIManager = {
             const extension = videoData.extension;
             const filename = `proofshot-${Date.now()}.${extension}`;
 
-            // Use Web Share API on mobile
-            if (isMobile) {
+            // Use Web Share API on mobile (except Android - use direct download for Android)
+            if (isMobile && !this.isAndroid()) {
                 const file = new File([blob], filename, { type: mimeType });
 
                 // For videos, skip canShare check as iOS often reports false even though it works
@@ -718,7 +746,7 @@ const UIManager = {
                     this.showNotification('Video saved!', 'success');
                 }
             } else {
-                // Desktop: standard download
+                // Desktop or Android: standard download
                 this.downloadBlob(blob, filename);
                 this.showNotification('Video saved successfully', 'success');
             }
@@ -1452,9 +1480,7 @@ const UIManager = {
      */
     handleCameraAddPhotocard() {
         // Trigger photocard upload
-        if (this.elements.photocardFileInput) {
-            this.elements.photocardFileInput.click();
-        }
+        this.triggerPhotocardFileInput();
     },
 
     /**
@@ -1666,11 +1692,11 @@ const UIManager = {
             const filename = `proofshot-${Date.now()}.${extension}`;
             const file = new File([blob], filename, { type: mimeType });
 
-            // Use mobile share API
+            // Use mobile share API (except Android - use direct download for Android)
             // For videos, skip canShare check as iOS often reports false even though it works
             const shouldSkipCanShare = exportAsVideo;
 
-            if (navigator.share && (shouldSkipCanShare || (navigator.canShare && navigator.canShare({ files: [file] })))) {
+            if (!this.isAndroid() && navigator.share && (shouldSkipCanShare || (navigator.canShare && navigator.canShare({ files: [file] })))) {
                 try {
                     await navigator.share({
                         files: [file],
@@ -1692,9 +1718,15 @@ const UIManager = {
                     }
                 }
             } else {
-                // Fallback to download
+                // Android or fallback: direct download
                 this.downloadBlob(blob, filename);
-                this.showNotification('Saved!', 'success');
+                let message = 'Saved!';
+                if (exportAsVideo) {
+                    message = 'Video saved!';
+                } else if (exportAsGif) {
+                    message = 'GIF saved!';
+                }
+                this.showNotification(message, 'success');
             }
 
             // After saving, show the "What's next?" modal

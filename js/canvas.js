@@ -297,10 +297,15 @@ const CanvasManager = {
                 this.photocard.scale *= 0.95;
                 this.render();
 
-                // Trigger photocard upload immediately (must be synchronous for mobile)
-                const photocardFileInput = document.getElementById('photocard-file-input');
-                if (photocardFileInput) {
-                    photocardFileInput.click();
+                // Trigger photocard upload with debounce (prevents double prompts on Android)
+                if (window.UIManager) {
+                    window.UIManager.triggerPhotocardFileInput();
+                } else {
+                    // Fallback if UIManager not available
+                    const photocardFileInput = document.getElementById('photocard-file-input');
+                    if (photocardFileInput) {
+                        photocardFileInput.click();
+                    }
                 }
 
                 // Reset scale after a brief moment
