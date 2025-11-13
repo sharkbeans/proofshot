@@ -605,9 +605,10 @@ const UIManager = {
             let extension, mimeType, blob;
 
             if (exportAsVideo) {
-                extension = 'webm';
-                mimeType = 'video/webm';
-                blob = await this.canvas.exportAsVideo();
+                const videoData = await this.canvas.exportAsVideo();
+                blob = videoData.blob;
+                mimeType = videoData.mimeType;
+                extension = videoData.extension;
             } else if (exportAsGif) {
                 extension = 'gif';
                 mimeType = 'image/gif';
@@ -679,12 +680,13 @@ const UIManager = {
             this.showLoading('Generating video...');
 
             const isMobile = window.innerWidth <= 767;
-            const extension = 'webm';
-            const mimeType = 'video/webm';
-            const filename = `proofshot-${Date.now()}.${extension}`;
 
             // Export as video
-            const blob = await this.canvas.exportAsVideo();
+            const videoData = await this.canvas.exportAsVideo();
+            const blob = videoData.blob;
+            const mimeType = videoData.mimeType;
+            const extension = videoData.extension;
+            const filename = `proofshot-${Date.now()}.${extension}`;
 
             // Use Web Share API on mobile
             if (isMobile) {
@@ -1642,9 +1644,10 @@ const UIManager = {
             let extension, mimeType, blob;
 
             if (exportAsVideo) {
-                extension = 'webm';
-                mimeType = 'video/webm';
-                blob = await this.canvas.exportAsVideo();
+                const videoData = await this.canvas.exportAsVideo();
+                blob = videoData.blob;
+                mimeType = videoData.mimeType;
+                extension = videoData.extension;
             } else if (exportAsGif) {
                 extension = 'gif';
                 mimeType = 'image/gif';

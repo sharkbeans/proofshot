@@ -2244,6 +2244,8 @@ const CanvasManager = {
             if (!duration) {
                 if (this.photocardVideo.isVideo && this.photocardVideo.element) {
                     duration = this.photocardVideo.element.duration;
+                } else if (this.backgroundVideo.isVideo && this.backgroundVideo.element) {
+                    duration = this.backgroundVideo.element.duration;
                 } else {
                     duration = 10; // Default 10 seconds
                 }
@@ -2252,25 +2254,27 @@ const CanvasManager = {
             // Create a canvas stream
             const stream = this.canvas.captureStream(30); // 30 fps
 
-            // Check for supported mime types
+            // Check for supported mime types - prioritize mp4 for better compatibility
             const mimeTypes = [
-                'video/webm;codecs=vp9',
-                'video/webm;codecs=vp8',
-                'video/webm',
-                'video/mp4'
+                { type: 'video/mp4', ext: 'mp4' },
+                { type: 'video/mp4;codecs=h264', ext: 'mp4' },
+                { type: 'video/webm;codecs=h264', ext: 'mp4' },
+                { type: 'video/webm;codecs=vp9', ext: 'webm' },
+                { type: 'video/webm;codecs=vp8', ext: 'webm' },
+                { type: 'video/webm', ext: 'webm' }
             ];
 
-            let mimeType = 'video/webm';
-            for (const type of mimeTypes) {
-                if (MediaRecorder.isTypeSupported(type)) {
-                    mimeType = type;
-                    console.log('Using mime type:', type);
+            let selectedFormat = { type: 'video/webm', ext: 'webm' };
+            for (const format of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(format.type)) {
+                    selectedFormat = format;
+                    console.log('Using mime type:', format.type);
                     break;
                 }
             }
 
             const mediaRecorder = new MediaRecorder(stream, {
-                mimeType: mimeType,
+                mimeType: selectedFormat.type,
                 videoBitsPerSecond: 2500000 // 2.5 Mbps
             });
 
@@ -2284,9 +2288,13 @@ const CanvasManager = {
 
             return new Promise((resolve, reject) => {
                 mediaRecorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: mimeType });
+                    const blob = new Blob(chunks, { type: selectedFormat.type });
                     console.log('Video encoding complete!');
-                    resolve(blob);
+                    resolve({
+                        blob: blob,
+                        mimeType: selectedFormat.type,
+                        extension: selectedFormat.ext
+                    });
                 };
 
                 mediaRecorder.onerror = (error) => {
