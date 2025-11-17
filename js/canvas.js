@@ -1954,6 +1954,14 @@ const CanvasManager = {
             layer: this.photocard.layer,
             showToploader: this.photocard.showToploader
         };
+
+        // If photocard is a video, ensure it's playing
+        if (this.photocardVideo.isVideo && this.photocardVideo.element) {
+            this.photocardVideo.element.play().catch(err => {
+                console.warn('Could not resume video playback:', err);
+            });
+        }
+
         this.render();
     },
 

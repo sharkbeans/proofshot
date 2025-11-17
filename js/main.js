@@ -62,13 +62,7 @@ function showWelcomeMessage() {
  * Add version info to footer
  */
 function addVersionInfo() {
-    const footer = document.querySelector('.footer p');
-    if (footer) {
-        const version = document.createElement('span');
-        version.textContent = ' • v1.0';
-        version.style.opacity = '0.6';
-        footer.appendChild(version);
-    }
+    // Version info removed
 }
 
 /**
