@@ -649,8 +649,9 @@ const UIManager = {
 
             const filename = `proofshot-${Date.now()}.${extension}`;
 
-            // Use Web Share API on mobile (except Android - use direct download for Android)
-            if (isMobile && !this.isAndroid()) {
+            // Use Web Share API on mobile for images/GIFs (except Android and videos - use direct download)
+            // Note: iOS Safari doesn't support sharing video files through Web Share API
+            if (isMobile && !this.isAndroid() && !exportAsVideo) {
                 const file = new File([blob], filename, { type: mimeType });
 
                 // Try Share API with canShare check first
@@ -663,20 +664,15 @@ const UIManager = {
                         });
                         this.showNotification('Shared successfully', 'success');
                     } catch (shareError) {
-                        if (shareError.name === 'AbortError') {
-                            // User cancelled, do nothing
-                        } else if (exportAsVideo) {
-                            // For video, show helpful message instead of downloading to Files
-                            this.showNotification('Unable to save to Gallery. Please try again or use the share button to save to Photos.', 'error');
-                        } else {
-                            // For images/GIFs, fallback to download is acceptable
+                        if (shareError.name !== 'AbortError') {
+                            // Fallback to download
                             this.downloadBlob(blob, filename);
                             this.showNotification('Saved!', 'success');
                         }
                     }
                 } else if (navigator.share) {
                     // Share API exists but canShare returned false
-                    // Try sharing anyway as a fallback (iOS sometimes works even though canShare returns false for videos)
+                    // Try sharing anyway as a fallback
                     try {
                         await navigator.share({
                             files: [file],
@@ -685,13 +681,8 @@ const UIManager = {
                         });
                         this.showNotification('Shared successfully', 'success');
                     } catch (shareError) {
-                        if (shareError.name === 'AbortError') {
-                            // User cancelled, do nothing
-                        } else if (exportAsVideo) {
-                            // For video, show helpful message
-                            this.showNotification('Unable to save to Gallery. Please try using the browser\'s download feature and move the file to Photos manually.', 'error');
-                        } else {
-                            // For images/GIFs, fallback to download
+                        if (shareError.name !== 'AbortError') {
+                            // Fallback to download
                             this.downloadBlob(blob, filename);
                             this.showNotification('Saved!', 'success');
                         }
@@ -699,14 +690,10 @@ const UIManager = {
                 } else {
                     // Share API not available, use download
                     this.downloadBlob(blob, filename);
-                    if (exportAsVideo) {
-                        this.showNotification('Video downloaded. Please move it from Downloads to Gallery manually.', 'info');
-                    } else {
-                        this.showNotification('Saved!', 'success');
-                    }
+                    this.showNotification('Saved!', 'success');
                 }
             } else {
-                // Desktop or Android: standard download
+                // Desktop, Android, or video: standard download
                 this.downloadBlob(blob, filename);
                 let message = 'Proofshot saved successfully';
                 if (exportAsVideo) {
@@ -749,49 +736,11 @@ const UIManager = {
             const filename = `proofshot-${Date.now()}.${extension}`;
 
             // Use Web Share API on mobile (except Android - use direct download for Android)
+            // Note: iOS Safari doesn't support sharing video files through Web Share API, use download instead
             if (isMobile && !this.isAndroid()) {
-                const file = new File([blob], filename, { type: mimeType });
-
-                // Try Share API with canShare check first
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Proofshot Video',
-                            text: 'Check out my proofshot video!'
-                        });
-                        this.showNotification('Video shared successfully', 'success');
-                    } catch (shareError) {
-                        if (shareError.name === 'AbortError') {
-                            // User cancelled, do nothing
-                        } else {
-                            // Share failed - show helpful message instead of downloading to Files
-                            this.showNotification('Unable to save to Gallery. Please try again or use the share button to save to Photos.', 'error');
-                        }
-                    }
-                } else if (navigator.share) {
-                    // Share API exists but canShare returned false
-                    // Try sharing anyway as a fallback (iOS sometimes works even though canShare returns false for videos)
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Proofshot Video',
-                            text: 'Check out my proofshot video!'
-                        });
-                        this.showNotification('Video shared successfully', 'success');
-                    } catch (shareError) {
-                        if (shareError.name === 'AbortError') {
-                            // User cancelled, do nothing
-                        } else {
-                            // Share failed - show helpful message
-                            this.showNotification('Unable to save to Gallery. Please try using the browser\'s download feature and move the file to Photos manually.', 'error');
-                        }
-                    }
-                } else {
-                    // Share API not available - show message about manual save
-                    this.downloadBlob(blob, filename);
-                    this.showNotification('Video downloaded. Please move it from Downloads to Gallery manually.', 'info');
-                }
+                // iOS doesn't support sharing videos, fall back to download
+                this.downloadBlob(blob, filename);
+                this.showNotification('Video saved!', 'success');
             } else {
                 // Desktop or Android: standard download
                 this.downloadBlob(blob, filename);
@@ -1739,9 +1688,9 @@ const UIManager = {
             const filename = `proofshot-${Date.now()}.${extension}`;
             const file = new File([blob], filename, { type: mimeType });
 
-            // Use mobile share API (except Android - use direct download for Android)
-            // Try Share API with canShare check first
-            if (!this.isAndroid() && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            // Use mobile share API for images/GIFs (except Android and videos - use direct download)
+            // Note: iOS Safari doesn't support sharing video files through Web Share API
+            if (!this.isAndroid() && !exportAsVideo && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
                         files: [file],
@@ -1749,27 +1698,20 @@ const UIManager = {
                         text: 'Check out my proofshot!'
                     });
                     let message = 'Photo shared successfully!';
-                    if (exportAsVideo) {
-                        message = 'Video shared successfully!';
-                    } else if (exportAsGif) {
+                    if (exportAsGif) {
                         message = 'Animated GIF shared successfully!';
                     }
                     this.showNotification(message, 'success');
                 } catch (shareError) {
-                    if (shareError.name === 'AbortError') {
-                        // User cancelled, do nothing
-                    } else if (exportAsVideo) {
-                        // For video, show helpful message instead of downloading to Files
-                        this.showNotification('Unable to save to Gallery. Please try again or use the share button to save to Photos.', 'error');
-                    } else {
-                        // For images/GIFs, fallback to download is acceptable
+                    if (shareError.name !== 'AbortError') {
+                        // Fallback to download
                         this.downloadBlob(blob, filename);
                         this.showNotification('Saved!', 'success');
                     }
                 }
-            } else if (!this.isAndroid() && navigator.share) {
+            } else if (!this.isAndroid() && !exportAsVideo && navigator.share) {
                 // Share API exists but canShare returned false
-                // Try sharing anyway as a fallback (iOS sometimes works even though canShare returns false for videos)
+                // Try sharing anyway as a fallback
                 try {
                     await navigator.share({
                         files: [file],
@@ -1777,30 +1719,23 @@ const UIManager = {
                         text: 'Check out my proofshot!'
                     });
                     let message = 'Photo shared successfully!';
-                    if (exportAsVideo) {
-                        message = 'Video shared successfully!';
-                    } else if (exportAsGif) {
+                    if (exportAsGif) {
                         message = 'Animated GIF shared successfully!';
                     }
                     this.showNotification(message, 'success');
                 } catch (shareError) {
-                    if (shareError.name === 'AbortError') {
-                        // User cancelled, do nothing
-                    } else if (exportAsVideo) {
-                        // For video, show helpful message
-                        this.showNotification('Unable to save to Gallery. Please try using the browser\'s download feature and move the file to Photos manually.', 'error');
-                    } else {
-                        // For images/GIFs, fallback to download
+                    if (shareError.name !== 'AbortError') {
+                        // Fallback to download
                         this.downloadBlob(blob, filename);
                         this.showNotification('Saved!', 'success');
                     }
                 }
             } else {
-                // Android or Share API not available: direct download
+                // Android, video, or Share API not available: direct download
                 this.downloadBlob(blob, filename);
                 let message = 'Saved!';
                 if (exportAsVideo) {
-                    message = 'Video downloaded. Please move it from Downloads to Gallery manually.';
+                    message = 'Video saved!';
                 } else if (exportAsGif) {
                     message = 'GIF saved!';
                 }
