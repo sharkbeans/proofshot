@@ -250,7 +250,8 @@ body {
 .edit-mode-toggle {
     position: absolute;
     top: var(--spacing-md);
-    left: var(--spacing-md);
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     gap: var(--spacing-xs);
     background: rgba(26, 26, 26, 0.9);
@@ -295,6 +296,53 @@ body {
 
 .edit-mode-btn span {
     font-size: 0.85rem;
+}
+
+/* Edit mode hint */
+.edit-mode-hint {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    background: var(--primary-color);
+    color: #1a1a1a;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: var(--shadow);
+    animation: hintFadeInOut 3s ease-in-out forwards;
+    pointer-events: none;
+    z-index: 11;
+}
+
+.edit-mode-hint::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    right: 20px;
+    border: 6px solid transparent;
+    border-bottom-color: var(--primary-color);
+}
+
+@keyframes hintFadeInOut {
+    0% {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    90% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(5px);
+        visibility: hidden;
+    }
 }
 
 /* Hide toggle when camera is active */
@@ -778,7 +826,8 @@ input[type="range"]::-moz-range-track {
     /* Edit mode toggle - adjust for mobile */
     .edit-mode-toggle {
         top: var(--spacing-sm);
-        left: var(--spacing-sm);
+        left: 50%;
+        transform: translateX(-50%);
         padding: 4px;
         gap: 4px;
     }
@@ -795,6 +844,12 @@ input[type="range"]::-moz-range-track {
 
     .edit-mode-btn span {
         font-size: 0.75rem;
+    }
+
+    .edit-mode-hint {
+        font-size: 0.75rem;
+        padding: 6px 10px;
+        top: calc(100% + 8px);
     }
 }
 

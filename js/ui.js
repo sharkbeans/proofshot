@@ -41,6 +41,7 @@ const UIManager = {
      */
     init(canvasInstance) {
         this.canvas = canvasInstance;
+        this.editModeHintShown = false;
         this.cacheElements();
         this.attachEventListeners();
         this.initializeLucideIcons();
@@ -54,6 +55,11 @@ const UIManager = {
         setTimeout(() => {
             this.syncPhotocardSliders();
         }, 100);
+
+        // Initially hide the hint
+        if (this.elements.editModeHint) {
+            this.elements.editModeHint.style.display = 'none';
+        }
     },
 
     /**
@@ -69,6 +75,9 @@ const UIManager = {
             toolbarToggle: document.getElementById('toolbar-toggle'),
             toolbarToggleIcon: document.getElementById('toolbar-toggle-icon'),
             toolbar: document.getElementById('toolbar'),
+
+            // Edit mode hint
+            editModeHint: document.getElementById('edit-mode-hint'),
 
             // File inputs
             bgFileInput: document.getElementById('bg-file-input'),
@@ -194,6 +203,8 @@ const UIManager = {
         if (this.elements.editModeBackgroundBtn) {
             this.elements.editModeBackgroundBtn.addEventListener('click', () => {
                 this.handleEditModeChange('background');
+                // Hide hint when user clicks background toggle
+                this.hideEditModeHint();
             });
         }
 
@@ -546,6 +557,13 @@ const UIManager = {
                 }
             }
 
+            // Show edit mode hint if user has both background and photocard
+            if (this.canvas.photocardImage) {
+                setTimeout(() => {
+                    this.showEditModeHint();
+                }, 500);
+            }
+
             this.showNotification('Background loaded successfully', 'success');
         } catch (error) {
             console.error('Error loading background:', error);
@@ -572,6 +590,14 @@ const UIManager = {
             this.showLoading('Loading photocard...');
             await this.canvas.loadPhotocard(file);
             this.syncPhotocardSliders();
+
+            // Show edit mode hint if user has both background and photocard
+            if (this.canvas.backgroundImage) {
+                setTimeout(() => {
+                    this.showEditModeHint();
+                }, 500);
+            }
+
             this.showNotification('Photocard loaded successfully', 'success');
         } catch (error) {
             console.error('Error loading photocard:', error);
@@ -604,6 +630,11 @@ const UIManager = {
         if (mediaFiles.length >= 2) {
             await this.canvas.loadPhotocard(mediaFiles[1]);
             this.syncPhotocardSliders();
+
+            // Show edit mode hint when both images are loaded
+            setTimeout(() => {
+                this.showEditModeHint();
+            }, 500);
         }
     },
 
@@ -1255,6 +1286,27 @@ const UIManager = {
         if (this.elements.editModePhotocardBtn && this.elements.editModeBackgroundBtn) {
             this.elements.editModePhotocardBtn.classList.toggle('active', mode === 'photocard');
             this.elements.editModeBackgroundBtn.classList.toggle('active', mode === 'background');
+        }
+    },
+
+    /**
+     * Show edit mode hint
+     */
+    showEditModeHint() {
+        if (this.elements.editModeHint && !this.editModeHintShown) {
+            this.elements.editModeHint.style.display = 'block';
+            this.elements.editModeHint.style.animation = 'hintFadeInOut 3s ease-in-out forwards';
+            this.editModeHintShown = true;
+        }
+    },
+
+    /**
+     * Hide edit mode hint
+     */
+    hideEditModeHint() {
+        if (this.elements.editModeHint) {
+            this.elements.editModeHint.style.display = 'none';
+            this.editModeHintShown = true;
         }
     },
 
