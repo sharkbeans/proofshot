@@ -133,10 +133,9 @@ body {
 }
 
 .canvas-container.preview-mode #proofshot-canvas {
-    width: 100%;
-    height: auto;
-    max-width: 100%;
     display: block;
+    /* Width and height set via JavaScript to match buffer dimensions exactly */
+    /* Transform scale applied via JavaScript for responsive sizing */
 }
 
 /* Aspect ratio classes for normal mode - dimensions set by JavaScript */

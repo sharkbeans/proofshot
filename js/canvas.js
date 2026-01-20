@@ -168,16 +168,13 @@ const CanvasManager = {
                 canvasHeight = canvasWidth * (4/3);
             }
         } else if (isPreviewMode) {
-            // Preview mode - resize canvas buffer to match display container for crisp rendering
-            const rect = container.getBoundingClientRect();
-            canvasWidth = rect.width;
-            canvasHeight = rect.height;
+            // Preview mode - keep current canvas dimensions to preserve resolution
+            canvasWidth = this.canvas.width / (window.devicePixelRatio || 1);
+            canvasHeight = this.canvas.height / (window.devicePixelRatio || 1);
 
-            // Fallback if container hasn't been measured yet
-            if (canvasWidth < 100 || canvasHeight < 100) {
-                canvasWidth = 800;  // Match max-width from CSS
-                canvasHeight = 800;
-            }
+            // Skip the normal resize logic and just update display
+            this.updatePreviewDisplay();
+            return;
         } else {
             // Normal mode - use container dimensions
             const rect = container.getBoundingClientRect();
@@ -206,7 +203,7 @@ const CanvasManager = {
         this.ctx.imageSmoothingQuality = 'high';
 
         // Set display size (CSS handles positioning in camera mode)
-        if (!isCameraActive && !isPreviewMode) {
+        if (!isCameraActive) {
             this.canvas.style.width = canvasWidth + 'px';
             this.canvas.style.height = canvasHeight + 'px';
 
@@ -215,10 +212,40 @@ const CanvasManager = {
                 container.style.width = canvasWidth + 'px';
                 container.style.height = canvasHeight + 'px';
             }
-        } else if (isPreviewMode) {
-            // In preview mode, use responsive sizing (CSS handles max-width)
-            this.canvas.style.width = '100%';
-            this.canvas.style.height = 'auto';
+        }
+
+        this.render();
+    },
+
+    /**
+     * Update preview display to avoid scaling blur
+     */
+    updatePreviewDisplay() {
+        const container = this.canvas.parentElement;
+        const dpr = window.devicePixelRatio || 1;
+
+        // Set canvas CSS dimensions to exactly match buffer (1:1 pixel mapping, no scaling)
+        const bufferWidth = this.canvas.width / dpr;
+        const bufferHeight = this.canvas.height / dpr;
+
+        this.canvas.style.width = bufferWidth + 'px';
+        this.canvas.style.height = bufferHeight + 'px';
+
+        // Scale down the canvas if it's too large for the viewport
+        const containerMaxWidth = 800; // From CSS max-width
+        const containerWidth = container.getBoundingClientRect().width || containerMaxWidth;
+        const maxWidth = Math.min(containerMaxWidth, containerWidth);
+
+        if (bufferWidth > maxWidth) {
+            const scale = maxWidth / bufferWidth;
+            this.canvas.style.transform = `scale(${scale})`;
+            this.canvas.style.transformOrigin = 'top left';
+
+            // Adjust container height to account for scaling
+            container.style.height = (bufferHeight * scale) + 'px';
+        } else {
+            this.canvas.style.transform = 'none';
+            container.style.height = 'auto';
         }
 
         this.render();
