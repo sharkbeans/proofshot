@@ -137,6 +137,11 @@ const UIManager = {
             // Canvas overlay
             canvasOverlay: document.getElementById('canvas-overlay'),
 
+            // Edit mode toggle
+            editModeToggle: document.getElementById('edit-mode-toggle'),
+            editModePhotocardBtn: document.getElementById('edit-mode-photocard'),
+            editModeBackgroundBtn: document.getElementById('edit-mode-background'),
+
             // QR Modal
             qrModal: document.getElementById('qr-modal'),
             qrModalClose: document.getElementById('qr-modal-close'),
@@ -176,6 +181,19 @@ const UIManager = {
         if (this.elements.cameraBtn) {
             this.elements.cameraBtn.addEventListener('click', () => {
                 this.handleCameraStart();
+            });
+        }
+
+        // Edit mode toggle buttons
+        if (this.elements.editModePhotocardBtn) {
+            this.elements.editModePhotocardBtn.addEventListener('click', () => {
+                this.handleEditModeChange('photocard');
+            });
+        }
+
+        if (this.elements.editModeBackgroundBtn) {
+            this.elements.editModeBackgroundBtn.addEventListener('click', () => {
+                this.handleEditModeChange('background');
             });
         }
 
@@ -1221,6 +1239,22 @@ const UIManager = {
             this.showNotification(errorMessage, 'error');
             this.hideLoading();
             return false;
+        }
+    },
+
+    /**
+     * Handle edit mode change
+     */
+    handleEditModeChange(mode) {
+        // Update canvas manager edit mode
+        if (this.canvas && this.canvas.setEditMode) {
+            this.canvas.setEditMode(mode);
+        }
+
+        // Update button states
+        if (this.elements.editModePhotocardBtn && this.elements.editModeBackgroundBtn) {
+            this.elements.editModePhotocardBtn.classList.toggle('active', mode === 'photocard');
+            this.elements.editModeBackgroundBtn.classList.toggle('active', mode === 'background');
         }
     },
 

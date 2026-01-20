@@ -245,6 +245,65 @@ body {
 }
 
 /* ===========================
+   Edit Mode Toggle
+   =========================== */
+
+.edit-mode-toggle {
+    position: absolute;
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-xs);
+    background: rgba(26, 26, 26, 0.9);
+    padding: 6px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
+    z-index: 10;
+    backdrop-filter: blur(10px);
+}
+
+.edit-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.edit-mode-btn:hover {
+    background: rgba(199, 182, 249, 0.1);
+    color: var(--primary-color);
+}
+
+.edit-mode-btn.active {
+    background: var(--primary-color);
+    color: #1a1a1a;
+    border-color: var(--primary-color);
+}
+
+.edit-mode-btn i {
+    width: 16px;
+    height: 16px;
+}
+
+.edit-mode-btn span {
+    font-size: 0.85rem;
+}
+
+/* Hide toggle when camera is active */
+.canvas-container.camera-active .edit-mode-toggle {
+    display: none;
+}
+
+/* ===========================
    Toolbar
    =========================== */
 
@@ -715,6 +774,28 @@ input[type="range"]::-moz-range-track {
         width: 100% !important;
         height: auto !important;
         object-fit: contain;
+    }
+
+    /* Edit mode toggle - adjust for mobile */
+    .edit-mode-toggle {
+        top: var(--spacing-sm);
+        left: var(--spacing-sm);
+        padding: 4px;
+        gap: 4px;
+    }
+
+    .edit-mode-btn {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+
+    .edit-mode-btn i {
+        width: 14px;
+        height: 14px;
+    }
+
+    .edit-mode-btn span {
+        font-size: 0.75rem;
     }
 }
 

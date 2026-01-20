@@ -106,6 +106,9 @@ const CanvasManager = {
         velocityY: 0
     },
 
+    // Edit mode ('photocard' or 'background')
+    editMode: 'photocard',
+
     /**
      * Initialize the canvas manager
      */
@@ -165,17 +168,16 @@ const CanvasManager = {
                 canvasHeight = canvasWidth * (4/3);
             }
         } else if (isPreviewMode) {
-            // Preview mode - maintain current canvas dimensions, just fit to container
-            // Use the existing canvas dimensions to maintain the captured resolution
+            // Preview mode - resize canvas buffer to match display container for crisp rendering
             const rect = container.getBoundingClientRect();
-            canvasWidth = rect.width || this.canvas.width;
-            canvasHeight = rect.height || this.canvas.height;
+            canvasWidth = rect.width;
+            canvasHeight = rect.height;
 
-            // Don't resize the canvas buffer in preview mode, just the display
-            this.canvas.style.width = '100%';
-            this.canvas.style.height = 'auto';
-            this.render();
-            return;
+            // Fallback if container hasn't been measured yet
+            if (canvasWidth < 100 || canvasHeight < 100) {
+                canvasWidth = 800;  // Match max-width from CSS
+                canvasHeight = 800;
+            }
         } else {
             // Normal mode - use container dimensions
             const rect = container.getBoundingClientRect();
@@ -204,7 +206,7 @@ const CanvasManager = {
         this.ctx.imageSmoothingQuality = 'high';
 
         // Set display size (CSS handles positioning in camera mode)
-        if (!isCameraActive) {
+        if (!isCameraActive && !isPreviewMode) {
             this.canvas.style.width = canvasWidth + 'px';
             this.canvas.style.height = canvasHeight + 'px';
 
@@ -213,6 +215,10 @@ const CanvasManager = {
                 container.style.width = canvasWidth + 'px';
                 container.style.height = canvasHeight + 'px';
             }
+        } else if (isPreviewMode) {
+            // In preview mode, use responsive sizing (CSS handles max-width)
+            this.canvas.style.width = '100%';
+            this.canvas.style.height = 'auto';
         }
 
         this.render();
@@ -279,10 +285,11 @@ const CanvasManager = {
      * Handle pointer down (touch/mouse start)
      */
     handlePointerDown(e) {
-        if (!this.photocardImage) return;
-        
         // Prevent interaction when modals are open
         if (document.querySelector('.modal.active')) return;
+
+        // Allow interaction if either background or photocard exists
+        if (!this.backgroundImage && !this.photocardImage) return;
 
         // If placeholder is clicked, trigger upload dialog
         if (this.isPlaceholder && this.gesture.pointers.length === 0) {
@@ -332,14 +339,26 @@ const CanvasManager = {
             this.gesture.lastX = e.clientX;
             this.gesture.lastY = e.clientY;
         } else if (this.gesture.pointers.length === 2) {
-            // Two pointers - pinch and rotate
+            // Two pointers - pinch/zoom and rotate/drag
             const p1 = this.gesture.pointers[0];
             const p2 = this.gesture.pointers[1];
 
+            // Calculate center point for two-finger drag
+            const centerX = (p1.x + p2.x) / 2;
+            const centerY = (p1.y + p2.y) / 2;
+            this.gesture.lastCenterX = centerX;
+            this.gesture.lastCenterY = centerY;
+
             this.gesture.startDistance = this.getDistance(p1, p2);
             this.gesture.startAngle = this.getAngle(p1, p2);
-            this.gesture.startScale = this.photocard.scale;
-            this.gesture.startRotation = this.photocard.rotation;
+
+            if (this.editMode === 'background') {
+                this.gesture.startScale = this.background.scale;
+                this.gesture.startRotation = this.background.rotation;
+            } else {
+                this.gesture.startScale = this.photocard.scale;
+                this.gesture.startRotation = this.photocard.rotation;
+            }
         }
 
         this.gesture.active = true;
@@ -352,7 +371,7 @@ const CanvasManager = {
     handlePointerMove(e) {
         // Prevent interaction when modals are open
         if (document.querySelector('.modal.active')) return;
-        
+
         // Update cursor if hovering over placeholder
         if (this.isPlaceholder && !this.gesture.active) {
             const rect = this.canvas.getBoundingClientRect();
@@ -366,7 +385,7 @@ const CanvasManager = {
             }
         }
 
-        if (!this.gesture.active || !this.photocardImage) return;
+        if (!this.gesture.active) return;
 
         // Update pointer position
         const pointerIndex = this.gesture.pointers.findIndex(p => p.id === e.pointerId);
@@ -375,34 +394,78 @@ const CanvasManager = {
             this.gesture.pointers[pointerIndex].y = e.clientY;
         }
 
-        if (this.gesture.pointers.length === 1) {
-            // Single pointer - drag
-            const dx = e.clientX - this.gesture.lastX;
-            const dy = e.clientY - this.gesture.lastY;
+        if (this.editMode === 'background' && this.backgroundImage) {
+            // Background editing mode
+            if (this.gesture.pointers.length === 1) {
+                // Single pointer - drag background
+                const dx = e.clientX - this.gesture.lastX;
+                const dy = e.clientY - this.gesture.lastY;
 
-            this.photocard.x += dx;
-            this.photocard.y += dy;
+                this.background.x += dx;
+                this.background.y += dy;
 
-            this.gesture.lastX = e.clientX;
-            this.gesture.lastY = e.clientY;
+                this.gesture.lastX = e.clientX;
+                this.gesture.lastY = e.clientY;
 
-            // Store velocity for inertia
-            this.animation.velocityX = dx;
-            this.animation.velocityY = dy;
-        } else if (this.gesture.pointers.length === 2) {
-            // Two pointers - pinch and rotate
-            const p1 = this.gesture.pointers[0];
-            const p2 = this.gesture.pointers[1];
+                // Store velocity for inertia
+                this.animation.velocityX = dx;
+                this.animation.velocityY = dy;
+            } else if (this.gesture.pointers.length === 2) {
+                // Two pointers - pinch to zoom and drag to move
+                const p1 = this.gesture.pointers[0];
+                const p2 = this.gesture.pointers[1];
 
-            // Pinch to zoom
-            const distance = this.getDistance(p1, p2);
-            const scaleChange = distance / this.gesture.startDistance;
-            this.photocard.scale = Math.max(0.1, Math.min(5, this.gesture.startScale * scaleChange));
+                // Calculate center point of the two pointers
+                const centerX = (p1.x + p2.x) / 2;
+                const centerY = (p1.y + p2.y) / 2;
 
-            // Rotate
-            const angle = this.getAngle(p1, p2);
-            const angleChange = angle - this.gesture.startAngle;
-            this.photocard.rotation = this.gesture.startRotation + angleChange;
+                // Drag: move background based on center point movement
+                if (this.gesture.lastCenterX !== undefined) {
+                    const dx = centerX - this.gesture.lastCenterX;
+                    const dy = centerY - this.gesture.lastCenterY;
+                    this.background.x += dx;
+                    this.background.y += dy;
+                }
+
+                this.gesture.lastCenterX = centerX;
+                this.gesture.lastCenterY = centerY;
+
+                // Pinch to zoom
+                const distance = this.getDistance(p1, p2);
+                const scaleChange = distance / this.gesture.startDistance;
+                this.background.scale = Math.max(0.1, Math.min(3, this.gesture.startScale * scaleChange));
+            }
+        } else if (this.editMode === 'photocard' && this.photocardImage) {
+            // Photocard editing mode (existing behavior)
+            if (this.gesture.pointers.length === 1) {
+                // Single pointer - drag
+                const dx = e.clientX - this.gesture.lastX;
+                const dy = e.clientY - this.gesture.lastY;
+
+                this.photocard.x += dx;
+                this.photocard.y += dy;
+
+                this.gesture.lastX = e.clientX;
+                this.gesture.lastY = e.clientY;
+
+                // Store velocity for inertia
+                this.animation.velocityX = dx;
+                this.animation.velocityY = dy;
+            } else if (this.gesture.pointers.length === 2) {
+                // Two pointers - pinch and rotate
+                const p1 = this.gesture.pointers[0];
+                const p2 = this.gesture.pointers[1];
+
+                // Pinch to zoom
+                const distance = this.getDistance(p1, p2);
+                const scaleChange = distance / this.gesture.startDistance;
+                this.photocard.scale = Math.max(0.1, Math.min(5, this.gesture.startScale * scaleChange));
+
+                // Rotate
+                const angle = this.getAngle(p1, p2);
+                const angleChange = angle - this.gesture.startAngle;
+                this.photocard.rotation = this.gesture.startRotation + angleChange;
+            }
         }
 
         this.render();
@@ -418,6 +481,10 @@ const CanvasManager = {
         if (this.gesture.pointers.length === 0) {
             this.gesture.active = false;
 
+            // Reset center tracking
+            this.gesture.lastCenterX = undefined;
+            this.gesture.lastCenterY = undefined;
+
             // Start inertia animation if there's significant velocity
             if (Math.abs(this.animation.velocityX) > 1 || Math.abs(this.animation.velocityY) > 1) {
                 this.startInertiaAnimation();
@@ -427,6 +494,8 @@ const CanvasManager = {
             const p = this.gesture.pointers[0];
             this.gesture.lastX = p.x;
             this.gesture.lastY = p.y;
+            this.gesture.lastCenterX = undefined;
+            this.gesture.lastCenterY = undefined;
         }
     },
 
@@ -434,12 +503,17 @@ const CanvasManager = {
      * Handle mouse wheel for zoom (desktop)
      */
     handleWheel(e) {
-        if (!this.photocardImage) return;
-
         e.preventDefault();
 
         const delta = e.deltaY > 0 ? 0.95 : 1.05;
-        this.photocard.scale = Math.max(0.1, Math.min(5, this.photocard.scale * delta));
+
+        if (this.editMode === 'background' && this.backgroundImage) {
+            // Zoom background
+            this.background.scale = Math.max(0.1, Math.min(3, this.background.scale * delta));
+        } else if (this.editMode === 'photocard' && this.photocardImage) {
+            // Zoom photocard
+            this.photocard.scale = Math.max(0.1, Math.min(5, this.photocard.scale * delta));
+        }
 
         this.render();
     },
@@ -453,9 +527,14 @@ const CanvasManager = {
         const animate = () => {
             if (!this.animation.active) return;
 
-            // Apply velocity
-            this.photocard.x += this.animation.velocityX;
-            this.photocard.y += this.animation.velocityY;
+            // Apply velocity based on edit mode
+            if (this.editMode === 'background' && this.backgroundImage) {
+                this.background.x += this.animation.velocityX;
+                this.background.y += this.animation.velocityY;
+            } else if (this.editMode === 'photocard' && this.photocardImage) {
+                this.photocard.x += this.animation.velocityX;
+                this.photocard.y += this.animation.velocityY;
+            }
 
             // Friction
             this.animation.velocityX *= 0.9;
@@ -1983,6 +2062,18 @@ const CanvasManager = {
     toggleToploader(show) {
         this.photocard.showToploader = show;
         this.render();
+    },
+
+    /**
+     * Set edit mode (background or photocard)
+     */
+    setEditMode(mode) {
+        if (mode !== 'background' && mode !== 'photocard') {
+            console.warn('Invalid edit mode:', mode);
+            return;
+        }
+        this.editMode = mode;
+        console.log('Edit mode set to:', mode);
     },
 
     // Legacy methods for backward compatibility
