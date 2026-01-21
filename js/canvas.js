@@ -78,6 +78,13 @@ const CanvasManager = {
         showToploader: true // toploader visibility
     },
 
+    // Crop settings (for export)
+    crop: {
+        enabled: false,
+        aspectRatio: null, // '4:3', '9:16', '1:1'
+        bounds: { x: 0, y: 0, width: 0, height: 0 }
+    },
+
     // Toploader gradient cache (to avoid recreating on every frame)
     toploaderGradientCache: {
         westGradient: null,
@@ -1494,6 +1501,9 @@ const CanvasManager = {
         if (this.photocardImage && this.photocard.layer === 'front') {
             this.drawPhotocard();
         }
+
+        // Draw crop overlay (after everything else)
+        this.drawCropOverlay();
     },
 
     /**
@@ -2103,6 +2113,143 @@ const CanvasManager = {
         console.log('Edit mode set to:', mode);
     },
 
+    /**
+     * Calculate crop bounds for the given aspect ratio
+     * @param {string} ratio - '4:3', '9:16', '1:1', or null
+     */
+    calculateCropBounds(ratio) {
+        if (!ratio) {
+            this.crop.enabled = false;
+            this.crop.aspectRatio = null;
+            this.render();
+            return;
+        }
+
+        const dpr = window.devicePixelRatio || 1;
+        const canvasWidth = this.canvas.width / dpr;
+        const canvasHeight = this.canvas.height / dpr;
+
+        let cropWidth, cropHeight;
+
+        switch (ratio) {
+            case '4:3':
+                // Landscape - wider than tall
+                if (canvasWidth / canvasHeight > 4/3) {
+                    cropHeight = canvasHeight;
+                    cropWidth = cropHeight * (4/3);
+                } else {
+                    cropWidth = canvasWidth;
+                    cropHeight = cropWidth * (3/4);
+                }
+                break;
+            case '9:16':
+                // Portrait - taller than wide
+                if (canvasHeight / canvasWidth > 16/9) {
+                    cropWidth = canvasWidth;
+                    cropHeight = cropWidth * (16/9);
+                } else {
+                    cropHeight = canvasHeight;
+                    cropWidth = cropHeight * (9/16);
+                }
+                break;
+            case '1:1':
+                // Square
+                cropWidth = cropHeight = Math.min(canvasWidth, canvasHeight);
+                break;
+            default:
+                this.crop.enabled = false;
+                this.crop.aspectRatio = null;
+                this.render();
+                return;
+        }
+
+        // Center the crop area
+        this.crop.enabled = true;
+        this.crop.aspectRatio = ratio;
+        this.crop.bounds = {
+            x: (canvasWidth - cropWidth) / 2,
+            y: (canvasHeight - cropHeight) / 2,
+            width: cropWidth,
+            height: cropHeight
+        };
+
+        this.render();
+    },
+
+    /**
+     * Draw crop overlay showing areas that will be cropped out
+     */
+    drawCropOverlay() {
+        if (!this.crop.enabled) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        const width = this.canvas.width / dpr;
+        const height = this.canvas.height / dpr;
+        const { x, y, width: cropW, height: cropH } = this.crop.bounds;
+
+        this.ctx.save();
+
+        // Draw semi-transparent overlay on cropped-out areas
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+
+        // Top area
+        if (y > 0) {
+            this.ctx.fillRect(0, 0, width, y);
+        }
+        // Bottom area
+        if (y + cropH < height) {
+            this.ctx.fillRect(0, y + cropH, width, height - y - cropH);
+        }
+        // Left area
+        if (x > 0) {
+            this.ctx.fillRect(0, y, x, cropH);
+        }
+        // Right area
+        if (x + cropW < width) {
+            this.ctx.fillRect(x + cropW, y, width - x - cropW, cropH);
+        }
+
+        // Draw crop boundary
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(x, y, cropW, cropH);
+
+        // Draw corner markers for visual clarity
+        const markerLength = Math.min(20, cropW / 5, cropH / 5);
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeStyle = 'rgba(199, 182, 249, 1)'; // Primary color
+
+        // Top-left corner
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y + markerLength);
+        this.ctx.lineTo(x, y);
+        this.ctx.lineTo(x + markerLength, y);
+        this.ctx.stroke();
+
+        // Top-right corner
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + cropW - markerLength, y);
+        this.ctx.lineTo(x + cropW, y);
+        this.ctx.lineTo(x + cropW, y + markerLength);
+        this.ctx.stroke();
+
+        // Bottom-left corner
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y + cropH - markerLength);
+        this.ctx.lineTo(x, y + cropH);
+        this.ctx.lineTo(x + markerLength, y + cropH);
+        this.ctx.stroke();
+
+        // Bottom-right corner
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + cropW - markerLength, y + cropH);
+        this.ctx.lineTo(x + cropW, y + cropH);
+        this.ctx.lineTo(x + cropW, y + cropH - markerLength);
+        this.ctx.stroke();
+
+        this.ctx.restore();
+    },
+
     // Legacy methods for backward compatibility
     flipHorizontal() {
         this.flipPhotocardHorizontal();
@@ -2222,15 +2369,38 @@ const CanvasManager = {
 
         return new Promise((resolve, reject) => {
             try {
+                const dpr = window.devicePixelRatio || 1;
+                let exportWidth, exportHeight;
+                let sourceX = 0, sourceY = 0, sourceW, sourceH;
+
+                // Apply crop if enabled
+                if (this.crop.enabled) {
+                    sourceX = this.crop.bounds.x * dpr;
+                    sourceY = this.crop.bounds.y * dpr;
+                    sourceW = this.crop.bounds.width * dpr;
+                    sourceH = this.crop.bounds.height * dpr;
+                    exportWidth = sourceW;
+                    exportHeight = sourceH;
+                } else {
+                    sourceW = this.canvas.width;
+                    sourceH = this.canvas.height;
+                    exportWidth = this.canvas.width;
+                    exportHeight = this.canvas.height;
+                }
+
                 // Create a temporary canvas for export
                 const exportCanvas = document.createElement('canvas');
-                exportCanvas.width = this.canvas.width;
-                exportCanvas.height = this.canvas.height;
+                exportCanvas.width = exportWidth;
+                exportCanvas.height = exportHeight;
 
                 const exportCtx = exportCanvas.getContext('2d');
 
-                // Draw current canvas
-                exportCtx.drawImage(this.canvas, 0, 0);
+                // Draw cropped region from current canvas
+                exportCtx.drawImage(
+                    this.canvas,
+                    sourceX, sourceY, sourceW, sourceH,
+                    0, 0, exportWidth, exportHeight
+                );
 
                 // Convert to blob
                 exportCanvas.toBlob((blob) => {
@@ -2261,10 +2431,16 @@ const CanvasManager = {
             const backgroundFrameCount = this.backgroundGif.isGif ? this.backgroundGif.frames.length : 1;
             const totalFrames = Math.max(photocardFrameCount, backgroundFrameCount);
 
-            // Create GIF encoder
+            // Create GIF encoder with crop support
             const dpr = window.devicePixelRatio || 1;
-            const width = this.canvas.width / dpr;
-            const height = this.canvas.height / dpr;
+            let width, height;
+            if (this.crop.enabled) {
+                width = this.crop.bounds.width;
+                height = this.crop.bounds.height;
+            } else {
+                width = this.canvas.width / dpr;
+                height = this.canvas.height / dpr;
+            }
 
             // Create inline worker to avoid CORS issues
             let workerScriptUrl;
@@ -2316,8 +2492,23 @@ const CanvasManager = {
                     delay = this.backgroundGif.delays[i % backgroundFrameCount];
                 }
 
-                // Add frame to GIF
-                gif.addFrame(this.canvas, { copy: true, delay: delay });
+                // Add frame to GIF (with crop support)
+                if (this.crop.enabled) {
+                    // Create a temporary canvas for the cropped frame
+                    const frameCanvas = document.createElement('canvas');
+                    frameCanvas.width = this.crop.bounds.width * dpr;
+                    frameCanvas.height = this.crop.bounds.height * dpr;
+                    const frameCtx = frameCanvas.getContext('2d');
+                    frameCtx.drawImage(
+                        this.canvas,
+                        this.crop.bounds.x * dpr, this.crop.bounds.y * dpr,
+                        this.crop.bounds.width * dpr, this.crop.bounds.height * dpr,
+                        0, 0, frameCanvas.width, frameCanvas.height
+                    );
+                    gif.addFrame(frameCanvas, { copy: true, delay: delay });
+                } else {
+                    gif.addFrame(this.canvas, { copy: true, delay: delay });
+                }
             }
 
             // Generate GIF and return as a promise
@@ -2382,8 +2573,30 @@ const CanvasManager = {
                 }
             }
 
-            // Create a canvas stream
-            const stream = this.canvas.captureStream(30); // 30 fps
+            // Determine export dimensions - use original video resolution
+            let exportWidth, exportHeight;
+            if (this.photocardVideo.isVideo && this.photocardVideo.element) {
+                exportWidth = this.photocardVideo.element.videoWidth;
+                exportHeight = this.photocardVideo.element.videoHeight;
+            } else if (this.backgroundVideo.isVideo && this.backgroundVideo.element) {
+                exportWidth = this.backgroundVideo.element.videoWidth;
+                exportHeight = this.backgroundVideo.element.videoHeight;
+            } else {
+                // Fallback to canvas dimensions
+                exportWidth = this.canvas.width;
+                exportHeight = this.canvas.height;
+            }
+
+            // Create export canvas at original resolution
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = exportWidth;
+            exportCanvas.height = exportHeight;
+            const exportCtx = exportCanvas.getContext('2d');
+            exportCtx.imageSmoothingEnabled = true;
+            exportCtx.imageSmoothingQuality = 'high';
+
+            // Create a canvas stream from export canvas
+            const stream = exportCanvas.captureStream(30); // 30 fps
 
             // Check for supported mime types - prioritize mp4 for better compatibility
             const mimeTypes = [
@@ -2404,9 +2617,9 @@ const CanvasManager = {
                 }
             }
 
+            // No bitrate limit - use default quality for original resolution
             const mediaRecorder = new MediaRecorder(stream, {
-                mimeType: selectedFormat.type,
-                videoBitsPerSecond: 2500000 // 2.5 Mbps
+                mimeType: selectedFormat.type
             });
 
             const chunks = [];
@@ -2417,10 +2630,86 @@ const CanvasManager = {
                 }
             };
 
+            // Store original canvas dimensions and context state
+            const originalWidth = this.canvas.width;
+            const originalHeight = this.canvas.height;
+            const dpr = window.devicePixelRatio || 1;
+
+            // Animation loop to render frames to export canvas
+            let animationId;
+            const renderExportFrame = () => {
+                // Clear export canvas
+                exportCtx.clearRect(0, 0, exportWidth, exportHeight);
+
+                // Draw background
+                if (this.backgroundImage) {
+                    const imgWidth = this.backgroundImage.videoWidth || this.backgroundImage.width;
+                    const imgHeight = this.backgroundImage.videoHeight || this.backgroundImage.height;
+                    const imgRatio = imgWidth / imgHeight;
+                    const canvasRatio = exportWidth / exportHeight;
+
+                    let drawWidth, drawHeight, drawX, drawY;
+                    if (imgRatio > canvasRatio) {
+                        drawHeight = exportHeight;
+                        drawWidth = drawHeight * imgRatio;
+                        drawX = (exportWidth - drawWidth) / 2;
+                        drawY = 0;
+                    } else {
+                        drawWidth = exportWidth;
+                        drawHeight = drawWidth / imgRatio;
+                        drawX = 0;
+                        drawY = (exportHeight - drawHeight) / 2;
+                    }
+                    exportCtx.drawImage(this.backgroundImage, drawX, drawY, drawWidth, drawHeight);
+                } else {
+                    exportCtx.fillStyle = this.backgroundColor;
+                    exportCtx.fillRect(0, 0, exportWidth, exportHeight);
+                }
+
+                // Draw photocard if exists
+                if (this.photocardImage) {
+                    const pcWidth = this.photocardImage.videoWidth || this.photocardImage.width;
+                    const pcHeight = this.photocardImage.videoHeight || this.photocardImage.height;
+
+                    // Scale photocard position and size relative to export dimensions
+                    const scaleX = exportWidth / (originalWidth / dpr);
+                    const scaleY = exportHeight / (originalHeight / dpr);
+                    const scale = Math.min(scaleX, scaleY);
+
+                    const scaledPcScale = this.photocard.scale * scale;
+                    const scaledWidth = pcWidth * scaledPcScale;
+                    const scaledHeight = pcHeight * scaledPcScale;
+                    const scaledX = this.photocard.x * scaleX;
+                    const scaledY = this.photocard.y * scaleY;
+
+                    exportCtx.save();
+                    exportCtx.translate(scaledX, scaledY);
+                    exportCtx.rotate(this.photocard.rotation);
+
+                    // Apply border radius if set
+                    if (this.photocard.borderRadius > 0) {
+                        const radius = this.photocard.borderRadius * scale;
+                        exportCtx.beginPath();
+                        exportCtx.roundRect(-scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight, radius);
+                        exportCtx.clip();
+                    }
+
+                    exportCtx.drawImage(this.photocardImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+                    exportCtx.restore();
+                }
+
+                animationId = requestAnimationFrame(renderExportFrame);
+            };
+
             return new Promise((resolve, reject) => {
                 mediaRecorder.onstop = () => {
+                    // Stop animation loop
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                    }
+
                     const blob = new Blob(chunks, { type: selectedFormat.type });
-                    console.log('Video encoding complete!');
+                    console.log(`Video encoding complete! Resolution: ${exportWidth}x${exportHeight}`);
                     resolve({
                         blob: blob,
                         mimeType: selectedFormat.type,
@@ -2429,13 +2718,19 @@ const CanvasManager = {
                 };
 
                 mediaRecorder.onerror = (error) => {
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                    }
                     console.error('MediaRecorder error:', error);
                     reject(error);
                 };
 
+                // Start animation loop
+                renderExportFrame();
+
                 // Start recording
                 mediaRecorder.start();
-                console.log(`Recording video for ${duration} seconds...`);
+                console.log(`Recording video at ${exportWidth}x${exportHeight} for ${duration} seconds...`);
 
                 // Stop after duration
                 setTimeout(() => {

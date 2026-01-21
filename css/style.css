@@ -1379,3 +1379,8 @@ input[type="range"]::-moz-range-track {
         opacity: 0;
     }
 }
+
+/* Rotate credit-card icons 90 degrees clockwise */
+[data-lucide="credit-card"] {
+    transform: rotate(90deg);
+}

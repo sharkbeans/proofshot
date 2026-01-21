@@ -125,23 +125,16 @@ const UIManager = {
             photocardYValue: document.getElementById('photocard-y-value'),
             photocardScaleValue: document.getElementById('photocard-scale-value'),
             photocardRotationValue: document.getElementById('photocard-rotation-value'),
-            photocardFlipHBtn: document.getElementById('photocard-flip-h-btn'),
-            photocardFlipVBtn: document.getElementById('photocard-flip-v-btn'),
             photocardResetBtn: document.getElementById('photocard-reset-btn'),
             photocardResetTransformBtn: document.getElementById('photocard-reset-transform-btn'),
 
             // Toploader toggle
             toploaderToggle: document.getElementById('toploader-toggle'),
 
-            // Layer buttons
-            bringFrontBtn: document.getElementById('bring-front-btn'),
-            sendBackBtn: document.getElementById('send-back-btn'),
-
             // Action buttons
             resetBtn: document.getElementById('reset-btn'),
             saveBtn: document.getElementById('save-btn'),
             saveVideoBtn: document.getElementById('save-video-btn'),
-            qrBtn: document.getElementById('qr-btn'),
 
             // Canvas overlay
             canvasOverlay: document.getElementById('canvas-overlay'),
@@ -345,14 +338,6 @@ const UIManager = {
         });
 
         // Photocard buttons
-        this.elements.photocardFlipHBtn.addEventListener('click', () => {
-            this.canvas.flipPhotocardHorizontal();
-        });
-
-        this.elements.photocardFlipVBtn.addEventListener('click', () => {
-            this.canvas.flipPhotocardVertical();
-        });
-
         this.elements.photocardResetBtn.addEventListener('click', () => {
             this.canvas.resetPhotocard();
             this.syncPhotocardSliders();
@@ -369,15 +354,6 @@ const UIManager = {
             this.toggleToploader(e.target.checked);
         });
 
-        // Layer buttons
-        this.elements.bringFrontBtn.addEventListener('click', () => {
-            this.canvas.bringToFront();
-        });
-
-        this.elements.sendBackBtn.addEventListener('click', () => {
-            this.canvas.sendToBack();
-        });
-
         // Action buttons
         this.elements.resetBtn.addEventListener('click', () => {
             this.handleReset();
@@ -389,10 +365,6 @@ const UIManager = {
 
         this.elements.saveVideoBtn.addEventListener('click', () => {
             this.handleSaveAsVideo();
-        });
-
-        this.elements.qrBtn.addEventListener('click', () => {
-            this.handleQRCode();
         });
 
         // QR Modal
