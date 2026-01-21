@@ -790,6 +790,7 @@ input[type="range"]::-moz-range-track {
     .main-content {
         padding: var(--spacing-sm);
         gap: var(--spacing-sm);
+        align-items: center;
     }
 
     /* Hide toolbar entirely on mobile */
@@ -814,13 +815,6 @@ input[type="range"]::-moz-range-track {
         max-height: calc(100vh - 180px) !important;
         width: auto !important;
         height: auto !important;
-    }
-
-    .canvas-container.preview-mode #proofshot-canvas {
-        max-height: calc(100vh - 180px);
-        width: 100% !important;
-        height: auto !important;
-        object-fit: contain;
     }
 
     /* Edit mode toggle - adjust for mobile */
