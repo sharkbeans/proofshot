@@ -1186,6 +1186,11 @@ const UIManager = {
                 this.elements.cameraControls.classList.add('active');
             }
 
+            // Show upload background button (reset inline display style from capture)
+            if (this.elements.cameraUploadBgBtn) {
+                this.elements.cameraUploadBgBtn.style.display = '';
+            }
+
             // Show aspect ratio button
             if (this.elements.cameraAspectRatioBtn) {
                 this.elements.cameraAspectRatioBtn.classList.add('active');
