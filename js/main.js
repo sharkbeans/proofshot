@@ -43,9 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show welcome message
         showWelcomeMessage();
 
-        // Add version info to footer
-        addVersionInfo();
-
         // Check for URL parameters (for sharing)
         checkUrlParameters();
 
@@ -67,13 +64,6 @@ function showWelcomeMessage() {
             localStorage.setItem('proofshot-visited', 'true');
         }, 500);
     }
-}
-
-/**
- * Add version info to footer
- */
-function addVersionInfo() {
-    // Version info removed
 }
 
 /**
