@@ -2696,6 +2696,26 @@ const CanvasManager = {
 
                     exportCtx.drawImage(this.photocardImage, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
                     exportCtx.restore();
+
+                    // Draw toploader if enabled (outside the border radius clip)
+                    if (this.photocard.showToploader) {
+                        const originalCtx = this.ctx;
+                        this.ctx = exportCtx;
+
+                        exportCtx.save();
+                        exportCtx.translate(scaledX, scaledY);
+                        exportCtx.rotate(this.photocard.rotation);
+
+                        // Apply scale (including flip) to match regular rendering
+                        const flipH = this.photocard.flipH ? -1 : 1;
+                        const flipV = this.photocard.flipV ? -1 : 1;
+                        exportCtx.scale(scaledPcScale * flipH, scaledPcScale * flipV);
+
+                        this.drawToploader(pcWidth, pcHeight);
+
+                        exportCtx.restore();
+                        this.ctx = originalCtx;
+                    }
                 }
 
                 animationId = requestAnimationFrame(renderExportFrame);
