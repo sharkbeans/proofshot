@@ -138,19 +138,6 @@ body {
     /* Transform scale applied via JavaScript for responsive sizing */
 }
 
-/* Aspect ratio classes for normal mode - dimensions set by JavaScript */
-.canvas-container.aspect-9-16:not(.camera-active) {
-    /* Aspect ratio maintained by explicit width/height in JavaScript */
-}
-
-.canvas-container.aspect-1-1:not(.camera-active) {
-    /* Aspect ratio maintained by explicit width/height in JavaScript */
-}
-
-.canvas-container.aspect-3-4:not(.camera-active) {
-    /* Aspect ratio maintained by explicit width/height in JavaScript */
-}
-
 .canvas-container.camera-active {
     position: fixed;
     top: 0;
