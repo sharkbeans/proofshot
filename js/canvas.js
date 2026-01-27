@@ -113,6 +113,10 @@ const CanvasManager = {
         velocityY: 0
     },
 
+    // Render batching state (prevents excessive renders during gestures)
+    _renderPending: false,
+    _renderRAF: null,
+
     // Edit mode ('photocard' or 'background')
     editMode: 'photocard',
 
@@ -502,7 +506,7 @@ const CanvasManager = {
             }
         }
 
-        this.render();
+        this.scheduleRender();
     },
 
     /**
@@ -549,7 +553,7 @@ const CanvasManager = {
             this.photocard.scale = Math.max(0.1, Math.min(5, this.photocard.scale * delta));
         }
 
-        this.render();
+        this.scheduleRender();
     },
 
     /**
@@ -1494,6 +1498,19 @@ const CanvasManager = {
 
         // Draw crop overlay (after everything else)
         this.drawCropOverlay();
+    },
+
+    /**
+     * Schedule a render on the next animation frame (batches multiple requests)
+     * Use this for high-frequency updates like pointer moves
+     */
+    scheduleRender() {
+        if (this._renderPending) return;
+        this._renderPending = true;
+        this._renderRAF = requestAnimationFrame(() => {
+            this._renderPending = false;
+            this.render();
+        });
     },
 
     /**
