@@ -3,6 +3,17 @@
  * Entry point - initializes the Proofshot application
  */
 
+// Debug mode - set to true to enable console logging
+window.PROOFSHOT_DEBUG = false;
+
+// Debug logger utility
+window.debug = {
+    log: (...args) => { if (window.PROOFSHOT_DEBUG) console.log(...args); },
+    warn: (...args) => { if (window.PROOFSHOT_DEBUG) console.warn(...args); },
+    error: (...args) => { if (window.PROOFSHOT_DEBUG) console.error(...args); },
+    info: (...args) => { if (window.PROOFSHOT_DEBUG) console.info(...args); }
+};
+
 // Make managers globally accessible
 window.BorderManager = BorderManager;
 window.CanvasManager = CanvasManager;
@@ -12,22 +23,22 @@ window.UIManager = UIManager;
  * Application initialization
  */
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('%cProofshot v1.0', 'color: #c7b6f9; font-size: 24px; font-weight: bold;');
+    debug.log('%cProofshot v1.0', 'color: #c7b6f9; font-size: 24px; font-weight: bold;');
 
     try {
         // Initialize canvas manager
-        console.log('Initializing canvas...');
+        debug.log('Initializing canvas...');
         CanvasManager.init();
 
         // Initialize border manager
-        console.log('Initializing borders...');
+        debug.log('Initializing borders...');
         BorderManager.init(CanvasManager);
 
         // Initialize UI manager
-        console.log('Initializing UI...');
+        debug.log('Initializing UI...');
         UIManager.init(CanvasManager);
 
-        console.log('%cProofshot initialized successfully!', 'color: #6dd5a0; font-weight: bold;');
+        debug.log('%cProofshot initialized successfully!', 'color: #6dd5a0; font-weight: bold;');
 
         // Show welcome message
         showWelcomeMessage();
@@ -39,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkUrlParameters();
 
     } catch (error) {
-        console.error('Error initializing Proofshot:', error);
+        debug.error('Error initializing Proofshot:', error);
         showErrorMessage('Failed to initialize the application. Please refresh the page.');
     }
 });
@@ -74,7 +85,7 @@ function checkUrlParameters() {
     // Check for shared proofshot ID
     const proofId = params.get('proof');
     if (proofId) {
-        console.log('Shared proofshot ID:', proofId);
+        debug.log('Shared proofshot ID:', proofId);
         // Could implement loading shared proofshots from a backend service
         // For now, this is just a placeholder
     }
@@ -92,7 +103,7 @@ function checkUrlParameters() {
 function loadPresetBackground(preset) {
     // Placeholder for loading preset backgrounds
     // Could implement preset backgrounds stored in assets folder
-    console.log('Loading preset background:', preset);
+    debug.log('Loading preset background:', preset);
 }
 
 /**
@@ -166,7 +177,7 @@ if (window.performance && window.performance.timing) {
         setTimeout(() => {
             const perfData = window.performance.timing;
             const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
-            console.log(`Page load time: ${pageLoadTime}ms`);
+            debug.log(`Page load time: ${pageLoadTime}ms`);
         }, 0);
     });
 }
@@ -195,6 +206,7 @@ window.toggleDebugMode = function() {
 
     const isDebug = canvas.dataset.debug === 'true';
     canvas.dataset.debug = !isDebug;
+    window.PROOFSHOT_DEBUG = !isDebug;
 
     if (!isDebug) {
         // Enable debug mode
@@ -235,4 +247,4 @@ Two fingers   : Rotate
 };
 
 // Add global command for shortcuts help
-console.log('%cType showKeyboardShortcuts() for help', 'color: #718096; font-style: italic;');
+debug.log('%cType showKeyboardShortcuts() for help', 'color: #718096; font-style: italic;');

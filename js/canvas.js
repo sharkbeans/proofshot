@@ -122,7 +122,7 @@ const CanvasManager = {
     init() {
         this.canvas = document.getElementById('proofshot-canvas');
         if (!this.canvas) {
-            console.error('Canvas element not found');
+            debug.error('Canvas element not found');
             return;
         }
 
@@ -671,7 +671,7 @@ const CanvasManager = {
 
             return true;
         } catch (error) {
-            console.error('Error accessing camera:', error);
+            debug.error('Error accessing camera:', error);
             throw error;
         }
     },
@@ -709,7 +709,7 @@ const CanvasManager = {
      */
     setCameraZoom(zoomLevel) {
         if (!this.camera.stream || !this.camera.active) {
-            console.warn('Camera is not active');
+            debug.warn('Camera is not active');
             return false;
         }
 
@@ -720,7 +720,7 @@ const CanvasManager = {
         // Get video track from stream
         const videoTrack = this.camera.stream.getVideoTracks()[0];
         if (!videoTrack) {
-            console.warn('No video track found');
+            debug.warn('No video track found');
             return false;
         }
 
@@ -728,12 +728,12 @@ const CanvasManager = {
         try {
             // Check if getCapabilities is supported
             if (!videoTrack.getCapabilities) {
-                console.warn('getCapabilities not supported on this device');
+                debug.warn('getCapabilities not supported on this device');
                 return false;
             }
 
             const capabilities = videoTrack.getCapabilities();
-            console.log('Camera capabilities:', capabilities);
+            debug.log('Camera capabilities:', capabilities);
 
             if (capabilities.zoom) {
                 // Update min/max zoom based on device capabilities
@@ -741,7 +741,7 @@ const CanvasManager = {
                 if (zoomRange.min && zoomRange.max) {
                     this.camera.minZoom = zoomRange.min;
                     this.camera.maxZoom = zoomRange.max;
-                    console.log(`Zoom range: ${this.camera.minZoom} - ${this.camera.maxZoom}`);
+                    debug.log(`Zoom range: ${this.camera.minZoom} - ${this.camera.maxZoom}`);
                 }
 
                 // Clamp again with actual device limits
@@ -751,21 +751,21 @@ const CanvasManager = {
                 const zoomConstraint = {
                     advanced: [{ zoom: deviceClampedZoom }]
                 };
-                console.log('Applying zoom constraint:', zoomConstraint);
+                debug.log('Applying zoom constraint:', zoomConstraint);
 
                 return videoTrack.applyConstraints(zoomConstraint).then(() => {
-                    console.log('Zoom applied successfully:', deviceClampedZoom);
+                    debug.log('Zoom applied successfully:', deviceClampedZoom);
                     return true;
                 }).catch(err => {
-                    console.error('Could not apply zoom constraint:', err);
+                    debug.error('Could not apply zoom constraint:', err);
                     return false;
                 });
             } else {
-                console.warn('Zoom capability not supported on this device');
+                debug.warn('Zoom capability not supported on this device');
                 return false;
             }
         } catch (error) {
-            console.error('Error setting camera zoom:', error);
+            debug.error('Error setting camera zoom:', error);
             return false;
         }
     },
@@ -812,7 +812,7 @@ const CanvasManager = {
                 };
             }
         } catch (error) {
-            console.warn('Error getting zoom constraints:', error);
+            debug.warn('Error getting zoom constraints:', error);
         }
 
         return { min: 1, max: 10 };
@@ -920,7 +920,7 @@ const CanvasManager = {
                     this.render();
                     resolve();
                 } catch (error) {
-                    console.error('Error parsing GIF:', error);
+                    debug.error('Error parsing GIF:', error);
                     reject(error);
                 }
             };
@@ -1109,7 +1109,7 @@ const CanvasManager = {
                     this.render();
                     resolve();
                 } catch (error) {
-                    console.error('Error parsing GIF:', error);
+                    debug.error('Error parsing GIF:', error);
                     reject(error);
                 }
             };
@@ -1197,26 +1197,26 @@ const CanvasManager = {
 
                 // If gifuct is available, use it
                 if (gifuctLib) {
-                    console.log('Parsing GIF with gifuct-js');
+                    debug.log('Parsing GIF with gifuct-js');
                     const gif = gifuctLib.parseGIF(arrayBuffer);
                     const frames = gifuctLib.decompressFrames(gif, true);
 
-                    console.log(`GIF parsed: ${frames.length} frames`);
+                    debug.log(`GIF parsed: ${frames.length} frames`);
 
                     return this.processGifuctFrames(frames, resolve, reject);
                 }
 
                 // Fallback to omggif if available
                 if (typeof window.GifReader !== 'undefined') {
-                    console.log('Parsing GIF with omggif (fallback)');
+                    debug.log('Parsing GIF with omggif (fallback)');
                     return this.parseGifWithOmggif(arrayBuffer, resolve, reject);
                 }
 
                 // No GIF library available
-                console.error('GIF parser library not loaded. Available globals:', Object.keys(window).filter(k => k.toLowerCase().includes('gif')));
+                debug.error('GIF parser library not loaded. Available globals:', Object.keys(window).filter(k => k.toLowerCase().includes('gif')));
                 reject(new Error('GIF parser library not loaded. Please reload the page.'));
             } catch (error) {
-                console.error('Error parsing GIF:', error);
+                debug.error('Error parsing GIF:', error);
                 reject(error);
             }
         });
@@ -1261,12 +1261,12 @@ const CanvasManager = {
                 img.onload = () => {
                     loadedFrames++;
                     if (loadedFrames === frames.length) {
-                        console.log('All GIF frames loaded successfully');
+                        debug.log('All GIF frames loaded successfully');
                         resolve({ frames: imageFrames, delays });
                     }
                 };
                 img.onerror = (error) => {
-                    console.error('Failed to load GIF frame:', error);
+                    debug.error('Failed to load GIF frame:', error);
                     reject(new Error(`Failed to load GIF frame ${index}`));
                 };
 
@@ -1292,7 +1292,7 @@ const CanvasManager = {
             const width = reader.width;
             const height = reader.height;
 
-            console.log(`GIF parsed with omggif: ${reader.numFrames()} frames, ${width}x${height}`);
+            debug.log(`GIF parsed with omggif: ${reader.numFrames()} frames, ${width}x${height}`);
 
             // Create a persistent canvas for composition
             const tempCanvas = document.createElement('canvas');
@@ -1317,12 +1317,12 @@ const CanvasManager = {
                 img.onload = () => {
                     loadedFrames++;
                     if (loadedFrames === reader.numFrames()) {
-                        console.log('All GIF frames loaded successfully (omggif)');
+                        debug.log('All GIF frames loaded successfully (omggif)');
                         resolve({ frames: imageFrames, delays });
                     }
                 };
                 img.onerror = (error) => {
-                    console.error('Failed to load GIF frame:', error);
+                    debug.error('Failed to load GIF frame:', error);
                     reject(new Error(`Failed to load GIF frame ${i}`));
                 };
 
@@ -1331,7 +1331,7 @@ const CanvasManager = {
                 delays[i] = (frameInfo.delay || 10) * 10;
             }
         } catch (error) {
-            console.error('Error parsing GIF with omggif:', error);
+            debug.error('Error parsing GIF with omggif:', error);
             reject(error);
         }
     },
@@ -2074,7 +2074,7 @@ const CanvasManager = {
         // If photocard is a video, ensure it's playing
         if (this.photocardVideo.isVideo && this.photocardVideo.element) {
             this.photocardVideo.element.play().catch(err => {
-                console.warn('Could not resume video playback:', err);
+                debug.warn('Could not resume video playback:', err);
             });
         }
 
@@ -2106,11 +2106,11 @@ const CanvasManager = {
      */
     setEditMode(mode) {
         if (mode !== 'background' && mode !== 'photocard') {
-            console.warn('Invalid edit mode:', mode);
+            debug.warn('Invalid edit mode:', mode);
             return;
         }
         this.editMode = mode;
-        console.log('Edit mode set to:', mode);
+        debug.log('Edit mode set to:', mode);
     },
 
     /**
@@ -2450,7 +2450,7 @@ const CanvasManager = {
                 const workerBlob = await workerResponse.blob();
                 workerScriptUrl = URL.createObjectURL(workerBlob);
             } catch (error) {
-                console.warn('Failed to load worker script, falling back to no workers:', error);
+                debug.warn('Failed to load worker script, falling back to no workers:', error);
                 workerScriptUrl = undefined;
             }
 
@@ -2462,12 +2462,12 @@ const CanvasManager = {
                 workerScript: workerScriptUrl
             });
 
-            console.log(`Exporting GIF with ${totalFrames} frames...`);
+            debug.log(`Exporting GIF with ${totalFrames} frames...`);
 
             // Render each frame
             for (let i = 0; i < totalFrames; i++) {
                 if (i % 10 === 0) {
-                    console.log(`Processing frame ${i + 1}/${totalFrames}...`);
+                    debug.log(`Processing frame ${i + 1}/${totalFrames}...`);
                 }
                 // Update images to the correct frame
                 if (this.photocardGif.isGif) {
@@ -2514,7 +2514,7 @@ const CanvasManager = {
             // Generate GIF and return as a promise
             return new Promise((resolve, reject) => {
                 gif.on('finished', (blob) => {
-                    console.log('GIF encoding complete!');
+                    debug.log('GIF encoding complete!');
                     // Clean up worker script URL if it was created
                     if (workerScriptUrl) {
                         URL.revokeObjectURL(workerScriptUrl);
@@ -2523,7 +2523,7 @@ const CanvasManager = {
                 });
 
                 gif.on('error', (error) => {
-                    console.error('GIF encoding error:', error);
+                    debug.error('GIF encoding error:', error);
                     // Clean up worker script URL if it was created
                     if (workerScriptUrl) {
                         URL.revokeObjectURL(workerScriptUrl);
@@ -2532,10 +2532,10 @@ const CanvasManager = {
                 });
 
                 gif.on('progress', (progress) => {
-                    console.log(`GIF encoding progress: ${Math.round(progress * 100)}%`);
+                    debug.log(`GIF encoding progress: ${Math.round(progress * 100)}%`);
                 });
 
-                console.log('Starting GIF encoding...');
+                debug.log('Starting GIF encoding...');
                 gif.render();
             });
         } catch (error) {
@@ -2612,7 +2612,7 @@ const CanvasManager = {
             for (const format of mimeTypes) {
                 if (MediaRecorder.isTypeSupported(format.type)) {
                     selectedFormat = format;
-                    console.log('Using mime type:', format.type);
+                    debug.log('Using mime type:', format.type);
                     break;
                 }
             }
@@ -2729,7 +2729,7 @@ const CanvasManager = {
                     }
 
                     const blob = new Blob(chunks, { type: selectedFormat.type });
-                    console.log(`Video encoding complete! Resolution: ${exportWidth}x${exportHeight}`);
+                    debug.log(`Video encoding complete! Resolution: ${exportWidth}x${exportHeight}`);
                     resolve({
                         blob: blob,
                         mimeType: selectedFormat.type,
@@ -2741,7 +2741,7 @@ const CanvasManager = {
                     if (animationId) {
                         cancelAnimationFrame(animationId);
                     }
-                    console.error('MediaRecorder error:', error);
+                    debug.error('MediaRecorder error:', error);
                     reject(error);
                 };
 
@@ -2750,7 +2750,7 @@ const CanvasManager = {
 
                 // Start recording
                 mediaRecorder.start();
-                console.log(`Recording video at ${exportWidth}x${exportHeight} for ${duration} seconds...`);
+                debug.log(`Recording video at ${exportWidth}x${exportHeight} for ${duration} seconds...`);
 
                 // Stop after duration
                 setTimeout(() => {
@@ -2760,7 +2760,7 @@ const CanvasManager = {
                 }, duration * 1000);
             });
         } catch (error) {
-            console.error('Error exporting video:', error);
+            debug.error('Error exporting video:', error);
             throw error;
         }
     },

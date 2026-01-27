@@ -538,7 +538,7 @@ const UIManager = {
 
             this.showNotification('Background loaded successfully', 'success');
         } catch (error) {
-            console.error('Error loading background:', error);
+            debug.error('Error loading background:', error);
             this.showNotification('Failed to load background', 'error');
         } finally {
             this.hideLoading();
@@ -572,7 +572,7 @@ const UIManager = {
 
             this.showNotification('Photocard loaded successfully', 'success');
         } catch (error) {
-            console.error('Error loading photocard:', error);
+            debug.error('Error loading photocard:', error);
             this.showNotification('Failed to load photocard', 'error');
         } finally {
             this.hideLoading();
@@ -709,7 +709,7 @@ const UIManager = {
             // After saving, show the "What's next?" modal
             this.openSaveConfirmationModal();
         } catch (error) {
-            console.error('Error saving:', error);
+            debug.error('Error saving:', error);
             this.showNotification('Failed to save proofshot', 'error');
         } finally {
             this.hideLoading();
@@ -744,7 +744,7 @@ const UIManager = {
             // After saving, show the "What's next?" modal
             this.openSaveConfirmationModal();
         } catch (error) {
-            console.error('Error saving video:', error);
+            debug.error('Error saving video:', error);
             this.showNotification('Failed to save video', 'error');
         } finally {
             this.hideLoading();
@@ -870,7 +870,7 @@ const UIManager = {
                 this.initializeLucideIcons();
             }, 2000);
         } catch (error) {
-            console.error('Error copying to clipboard:', error);
+            debug.error('Error copying to clipboard:', error);
             this.showNotification('Failed to copy link', 'error');
         }
     },
@@ -1032,7 +1032,7 @@ const UIManager = {
      * Show loading indicator
      */
     showLoading(message = 'Loading...') {
-        console.log('Loading:', message);
+        debug.log('Loading:', message);
 
         // Create loading overlay if it doesn't exist
         let loadingOverlay = document.getElementById('loading-overlay');
@@ -1107,7 +1107,7 @@ const UIManager = {
      * Hide loading indicator
      */
     hideLoading() {
-        console.log('Loading complete');
+        debug.log('Loading complete');
         const loadingOverlay = document.getElementById('loading-overlay');
         if (loadingOverlay) {
             loadingOverlay.style.display = 'none';
@@ -1125,7 +1125,7 @@ const UIManager = {
             error: 'color: #e53e3e'
         };
 
-        console.log(`%c${message}`, styles[type] || styles.info);
+        debug.log(`%c${message}`, styles[type] || styles.info);
 
         // Could also create a toast element here for visual feedback
         this.createToast(message, type);
@@ -1235,7 +1235,7 @@ const UIManager = {
             this.hideLoading();
             return true;
         } catch (error) {
-            console.error('Error starting camera:', error);
+            debug.error('Error starting camera:', error);
 
             let errorMessage = 'Failed to access camera';
             if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
@@ -1437,7 +1437,7 @@ const UIManager = {
             this.showCameraFlash();
             this.showNotification('Photo captured!', 'success');
         } catch (error) {
-            console.error('Error capturing photo:', error);
+            debug.error('Error capturing photo:', error);
             this.showNotification('Failed to capture photo', 'error');
         }
     },
@@ -1538,7 +1538,7 @@ const UIManager = {
 
         // Apply zoom to camera
         this.canvas.setCameraZoom(newZoom).catch(err => {
-            console.error('Zoom in failed:', err);
+            debug.error('Zoom in failed:', err);
         });
     },
 
@@ -1556,7 +1556,7 @@ const UIManager = {
 
         // Apply zoom to camera
         this.canvas.setCameraZoom(newZoom).catch(err => {
-            console.error('Zoom out failed:', err);
+            debug.error('Zoom out failed:', err);
         });
     },
 
@@ -1566,7 +1566,7 @@ const UIManager = {
     handleCameraZoomSlider(e) {
         const zoomValue = parseFloat(e.target.value);
         this.canvas.setCameraZoom(zoomValue).catch(err => {
-            console.error('Slider zoom failed:', err);
+            debug.error('Slider zoom failed:', err);
         });
     },
 
@@ -1765,7 +1765,7 @@ const UIManager = {
             // After saving, show the "What's next?" modal
             this.openSaveConfirmationModal();
         } catch (error) {
-            console.error('Error saving/sharing:', error);
+            debug.error('Error saving/sharing:', error);
             this.showNotification('Failed to save', 'error');
         } finally {
             this.hideLoading();
