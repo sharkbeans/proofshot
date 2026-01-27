@@ -945,6 +945,14 @@ const CanvasManager = {
      */
     async loadBackgroundVideo(file) {
         return new Promise((resolve, reject) => {
+            // Clean up previous video ObjectURL to prevent memory leak
+            if (this.backgroundVideo.element && this.backgroundVideo.element.src) {
+                const oldUrl = this.backgroundVideo.element.src;
+                if (oldUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(oldUrl);
+                }
+            }
+
             const video = document.createElement('video');
             video.muted = true;
             video.loop = true;
@@ -1118,6 +1126,14 @@ const CanvasManager = {
      */
     async loadPhotocardVideo(file) {
         return new Promise((resolve, reject) => {
+            // Clean up previous video ObjectURL to prevent memory leak
+            if (this.photocardVideo.element && this.photocardVideo.element.src) {
+                const oldUrl = this.photocardVideo.element.src;
+                if (oldUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(oldUrl);
+                }
+            }
+
             const video = document.createElement('video');
             video.muted = true;
             video.loop = true;
