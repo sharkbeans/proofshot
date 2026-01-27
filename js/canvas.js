@@ -898,36 +898,42 @@ const CanvasManager = {
     },
 
     /**
-     * Load background GIF and parse frames
+     * Helper to read file as ArrayBuffer and parse GIF
+     * @param {File} file - GIF file to parse
+     * @returns {Promise<{frames: Image[], delays: number[]}>}
      */
-    async loadBackgroundGif(file) {
+    async _readAndParseGif(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-
             reader.onload = async (e) => {
                 try {
-                    const arrayBuffer = e.target.result;
-                    const gif = await this.parseGif(arrayBuffer);
-
-                    this.backgroundGif.isGif = true;
-                    this.backgroundGif.frames = gif.frames;
-                    this.backgroundGif.delays = gif.delays;
-                    this.backgroundGif.currentFrame = 0;
-                    this.backgroundGif.lastFrameTime = performance.now();
-
-                    this.backgroundImage = gif.frames[0];
-                    this.startBackgroundGifAnimation();
-                    this.render();
-                    resolve();
+                    const gif = await this.parseGif(e.target.result);
+                    resolve(gif);
                 } catch (error) {
                     debug.error('Error parsing GIF:', error);
                     reject(error);
                 }
             };
-
             reader.onerror = reject;
             reader.readAsArrayBuffer(file);
         });
+    },
+
+    /**
+     * Load background GIF and parse frames
+     */
+    async loadBackgroundGif(file) {
+        const gif = await this._readAndParseGif(file);
+
+        this.backgroundGif.isGif = true;
+        this.backgroundGif.frames = gif.frames;
+        this.backgroundGif.delays = gif.delays;
+        this.backgroundGif.currentFrame = 0;
+        this.backgroundGif.lastFrameTime = performance.now();
+
+        this.backgroundImage = gif.frames[0];
+        this.startBackgroundGifAnimation();
+        this.render();
     },
 
     /**
@@ -1080,43 +1086,27 @@ const CanvasManager = {
      * Load photocard GIF and parse frames
      */
     async loadPhotocardGif(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
+        const gif = await this._readAndParseGif(file);
 
-            reader.onload = async (e) => {
-                try {
-                    const arrayBuffer = e.target.result;
-                    const gif = await this.parseGif(arrayBuffer);
+        this.photocardGif.isGif = true;
+        this.photocardGif.frames = gif.frames;
+        this.photocardGif.delays = gif.delays;
+        this.photocardGif.currentFrame = 0;
+        this.photocardGif.lastFrameTime = performance.now();
 
-                    this.photocardGif.isGif = true;
-                    this.photocardGif.frames = gif.frames;
-                    this.photocardGif.delays = gif.delays;
-                    this.photocardGif.currentFrame = 0;
-                    this.photocardGif.lastFrameTime = performance.now();
+        this.photocardImage = gif.frames[0];
+        this.isPlaceholder = false;
 
-                    this.photocardImage = gif.frames[0];
-                    this.isPlaceholder = false;
+        this.canvas.classList.remove('placeholder-active');
+        this.canvas.style.cursor = 'grab';
 
-                    this.canvas.classList.remove('placeholder-active');
-                    this.canvas.style.cursor = 'grab';
+        const rect = this.canvas.getBoundingClientRect();
+        this.photocard.x = rect.width / 2;
+        this.photocard.y = rect.height / 2;
+        this.photocard.scale = Math.min(rect.width, rect.height) / (gif.frames[0].width * 1.5);
 
-                    const rect = this.canvas.getBoundingClientRect();
-                    this.photocard.x = rect.width / 2;
-                    this.photocard.y = rect.height / 2;
-                    this.photocard.scale = Math.min(rect.width, rect.height) / (gif.frames[0].width * 1.5);
-
-                    this.startPhotocardGifAnimation();
-                    this.render();
-                    resolve();
-                } catch (error) {
-                    debug.error('Error parsing GIF:', error);
-                    reject(error);
-                }
-            };
-
-            reader.onerror = reject;
-            reader.readAsArrayBuffer(file);
-        });
+        this.startPhotocardGifAnimation();
+        this.render();
     },
 
     /**
