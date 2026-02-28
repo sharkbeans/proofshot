@@ -27,13 +27,13 @@ const ToploaderConfig = {
     // Border/frame thickness
     frame: {
         // Left edge thickness
-        leftThickness: 12.096,
+        leftThickness: 10,
 
         // Right edge thickness
-        rightThickness: 7.488,
+        rightThickness: 9,
 
         // Right edge inset adjustment
-        rightInset: 2
+        rightInset: 1
     },
 
     // White border reflections
@@ -44,45 +44,45 @@ const ToploaderConfig = {
             widthMultiplier: 3,
 
             // Gradient scale factor
-            scaleFactor: 1.35,
+            scaleFactor: 1.2,
 
             // Opacity stops
-            startOpacity: 0.85,  // Start of gradient
-            endOpacity: 0.425    // End of gradient (85% of 0.5)
+            startOpacity: 0.7,
+            endOpacity: 0.4
         },
 
         // East (right) border gradient
         east: {
             // Gradient width multiplier
-            widthMultiplier: 4.35,
+            widthMultiplier: 3,
 
             // Gradient scale factor
-            scaleFactor: 1.35,
+            scaleFactor: 1.2,
 
             // Opacity stops
-            startOpacity: 0.85,  // Start of gradient
-            endOpacity: 0.85     // End of gradient
+            startOpacity: 0.7,
+            endOpacity: 0.4
         },
 
         // South (bottom) border gradient
         south: {
             // Opacity stops across the gradient
-            edgeOpacity: 0.595,   // 85% of 0.7 - at the edges
-            centerOpacity: 0.8075 // 85% of 0.95 - at the center
+            edgeOpacity: 0.5,
+            centerOpacity: 0.7
         }
     },
 
     // Plastic overlay effects
     overlay: {
         // Semi-transparent base for plastic effect
-        baseOpacity: 0.04,
+        baseOpacity: 0.03,
 
         // Inner viewing area tint (slight blue tint for plastic)
         innerTint: {
             red: 240,
             green: 245,
             blue: 255,
-            opacity: 0.08
+            opacity: 0.05
         },
 
         // Inner edge definition
@@ -90,8 +90,8 @@ const ToploaderConfig = {
             red: 180,
             green: 190,
             blue: 210,
-            opacity: 0.15,
-            lineWidth: 1
+            opacity: 0.12,
+            lineWidth: 0.8
         }
     },
 
@@ -100,12 +100,12 @@ const ToploaderConfig = {
         // Top glossy highlight (reflection from light source)
         top: {
             // Height as percentage of inner height
-            heightPercent: 0.36,
+            heightPercent: 0.3,
 
             // Opacity stops
-            startOpacity: 0.108,    // Top of highlight
-            middleOpacity: 0.027,   // 20% down
-            endOpacity: 0           // Bottom (fades to transparent)
+            startOpacity: 0.07,
+            middleOpacity: 0.02,
+            endOpacity: 0
         }
     },
 
@@ -113,39 +113,39 @@ const ToploaderConfig = {
     shadows: {
         // North (top) shadow
         north: {
-            startOpacity: 0.125,
+            startOpacity: 0.1,
             endOpacity: 0
         },
 
         // West (left) shadow
         west: {
-            startOpacity: 0.25,
+            startOpacity: 0.18,
             endOpacity: 0
         },
 
         // East (right) shadow
         east: {
-            startOpacity: 0.25,
+            startOpacity: 0.18,
             endOpacity: 0
         },
 
         // South (bottom) shadow
         south: {
             startOpacity: 0,
-            endOpacity: 0.25
+            endOpacity: 0.18
         }
     },
 
     // Third internal shading line (grey border following white border)
     shadingLine: {
         // Grey color with opacity
-        red: 128,
-        green: 128,
-        blue: 128,
-        opacity: 0.7,
+        red: 140,
+        green: 140,
+        blue: 140,
+        opacity: 0.45,
 
         // Width reduction factor (multiplied by border thickness)
-        widthReduction: 0.5
+        widthReduction: 0.4
     },
 
     // Top clipping (removes artifacts)
@@ -162,11 +162,11 @@ const ToploaderConfig = {
 
     // White glaze film covering the photocard
     glazeFilm: {
-        // White color with mild opacity (3%)
+        // White color with mild opacity
         red: 255,
         green: 255,
         blue: 255,
-        opacity: 0.03
+        opacity: 0.02
     }
 };
 
